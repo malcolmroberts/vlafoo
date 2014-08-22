@@ -11,9 +11,13 @@ CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
 
 VPATH=.:$(FFTWPP_INCLUDE_PATH)
 
-%.o : %.cc %.h
+fftw++.o : fftw++.cc fftw++.h
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
-%.o : %.cpp %.hpp
+
+timestepper.o : timestepper.cpp timestepper.hpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
+
+vlafoo.o : vlafoo.cpp vlafoo.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
 vlafoo: timestepper.o vlafoo.o fftw++.o

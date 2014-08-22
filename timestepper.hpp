@@ -112,23 +112,34 @@ public:
     for(unsigned int i=0; i < rk_n; i++)
       f[i] += dt*s[i];
 
-    T error=0.0;
-    {
-      T* S0=S[0];
-      T* S1=S[1];
-      T eps=1e-10;
-      for(unsigned int i=0; i < rk_n; i++) {
-	T S0i = S0[i];
-	T S1i = S1[i];
-	T diff = abs(S0i-S1i) / (max(abs(S0i),abs(S1i)) + eps);
-	if(diff > error)
-	  error = diff;
+    if(dynamic) {
+      T error=0.0;
+      {
+	T* S0=S[0];
+	T* S1=S[1];
+	const T eps=1e-6;
+	for(unsigned int i=0; i < rk_n; i++) {
+	  T S0i = S0[i];
+	  T S1i = S1[i];
+	  T fi = f[i];
+	  T diff = dt*abs(S0i-S1i) / (max(abs(fi+dt*S0i),abs(fi+dt*S1i)) + eps);
+	  if(diff > error)
+	    error = diff;
+	}
+	
       }
-
+      
+      if(error < tolmin)
+	dt *= 1.4;
+      if(error > tolmax)
+	dt *= 0.7;
+      //std::cout << "error=" << error<< "\tdt=" << dt << std::endl;
     }
-    std::cout << error << std::endl;
-
-    // TODO: adaptive version
+    
+    if(dt < 0) {
+      std::cerr << "dt=" << dt << std::endl;
+      exit(1);
+    }
   }
   
 };
