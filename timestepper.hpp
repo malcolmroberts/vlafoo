@@ -22,8 +22,8 @@ public:
 
     // FIXME: set parameters via command-line
     dynamic=true;
-    tolmin=0.03;
-    tolmax=0.05;
+    tolmin=0.0003;
+    tolmax=0.0005;
   }
 
   T max(T a, T b) {

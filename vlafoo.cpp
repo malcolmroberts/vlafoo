@@ -324,6 +324,12 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
   int wallouts=0;
   bool go=true;
 
+  // Make sure that we don't wildly jump past the save points:
+  if(dt > nextsave1)
+    dt = nextsave1;
+  if(dt > nextsave2)
+    dt = nextsave2;
+
   while(go) {
     time_step(dt);
     
@@ -350,6 +356,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       dt=dt0; // restore time-step
       savenow1=false;
     }
+    
     if(tnow + dt >= nextsave1) {
       dt=nextsave1-tnow; // shorten dt so that we save at the right time
       savenow1=true;
@@ -496,8 +503,10 @@ bool VlaFoo::check_for_error()
 {
   bool error=false;
   for(int i=0; i < nx; ++i) {
+    real *fi=f[i];
     for(int j=0; j < nv; ++j) {
-      if(isnan(f[i][j]) || isinf(f[i][j])) {
+      real fij=fi[j];
+      if(isnan(fij) || isinf(fij)) {
 	error=true;
 	break;
       }

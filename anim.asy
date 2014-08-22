@@ -1,5 +1,6 @@
 import graph;
 import palette;
+import cooltowarm;
 
 import animate; 
 //settings.render=2; 
@@ -9,7 +10,7 @@ import animate;
 settings.outformat="mp4";
  
 size(15cm,0); 
- 
+
 animation A;
 
 string basename=getstring("basename");
@@ -49,6 +50,7 @@ for(int i=0; i < n; ++i) {
 } 
 
 write("image bounds:",fmin,fmax);
+Palette=cooltowarm(fmin,0,fmax);
 
 // re-read the files and make the movie:
 for(int i=0; i < n; ++i) { 
