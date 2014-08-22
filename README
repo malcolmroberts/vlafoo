@@ -7,6 +7,6 @@ kx=0.2
 eps=0.05
 v0=3
 
-./go -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=landau
+./vlafoo -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=landau
 
-./go -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=doublestream
+./vlafoo -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=doublestream
