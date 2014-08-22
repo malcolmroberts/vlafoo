@@ -11,6 +11,8 @@ CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
 
 VPATH=.:$(FFTWPP_INCLUDE_PATH)
 
+# The combination of .cc/.h and .cpp/.hpp means object compilation is
+# hand-specified.
 fftw++.o : fftw++.cc fftw++.h
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
