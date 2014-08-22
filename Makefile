@@ -8,8 +8,12 @@ CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 # Stick to one thread for now:
 CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
 
-
 VPATH=.:$(FFTWPP_INCLUDE_PATH)
+
+all: vlafoo
+
+vlafoo: timestepper.o vlafoo.o fftw++.o
+	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 # The combination of .cc/.h and .cpp/.hpp means object compilation is
 # hand-specified.
@@ -22,8 +26,10 @@ timestepper.o : timestepper.cpp timestepper.hpp
 vlafoo.o : vlafoo.cpp vlafoo.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
-vlafoo: timestepper.o vlafoo.o fftw++.o
-	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+
 
 make clean:
 	rm -f vlafoo *.o
+
+FORCE:
