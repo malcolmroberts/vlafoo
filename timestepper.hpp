@@ -20,10 +20,22 @@ public:
   {
     rk_allocated=false;
 
-    // FIXME: set via command-line
+    // FIXME: set parameters via command-line
     dynamic=true;
     tolmin=0.03;
     tolmax=0.05;
+  }
+
+  T max(T a, T b) {
+    if(a > b)
+      return a;
+    return b;
+  }
+
+  T abs(T a) {
+    if(a < 0)
+      return -a;
+    return a;
   }
 
   void rk_allocate(int n, std::string &rk_name)
@@ -33,6 +45,7 @@ public:
     if(rk_name == "euler") {
       rk_stages=1;
       rk=EULER;
+      dynamic=false;
     }
     if(rk_name == "rk2") {
       rk_stages=2;
@@ -40,7 +53,7 @@ public:
     }
 
     if(rk_stages == 0) {
-      std::cerr << "ERROR: unkown integrator " 
+      std::cerr << "ERROR: unknown integrator " 
 		<< rk_name << std::endl;
       exit(1);
     }
@@ -72,7 +85,8 @@ public:
       rk2_step(f,dt);
       break;
     default:
-      std::cerr << "ERROR: unkown integrator in rk_step." << std::endl;
+      std::cerr << "ERROR: unknown integrator in rk_step." << std::endl;
+      exit(1);
       break;
     }
   }
@@ -97,9 +111,23 @@ public:
     rk_source(f,s);
     for(unsigned int i=0; i < rk_n; i++)
       f[i] += dt*s[i];
-    
 
-    double error=0.0;
+    T error=0.0;
+    {
+      T* S0=S[0];
+      T* S1=S[1];
+      T eps=1e-10;
+      for(unsigned int i=0; i < rk_n; i++) {
+	T S0i = S0[i];
+	T S1i = S1[i];
+	T diff = abs(S0i-S1i) / (max(abs(S0i),abs(S1i)) + eps);
+	if(diff > error)
+	  error = diff;
+      }
+
+    }
+    std::cout << error << std::endl;
+
     // TODO: compute error
 
     // TODO: adaptive version
