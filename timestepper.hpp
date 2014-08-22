@@ -128,8 +128,6 @@ public:
     }
     std::cout << error << std::endl;
 
-    // TODO: compute error
-
     // TODO: adaptive version
   }
   
