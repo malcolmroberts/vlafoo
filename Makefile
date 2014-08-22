@@ -1,7 +1,7 @@
 CC=g++
 
 LDFLAGS=-lfftw3 -lm
-CXXFLAGS=-O3 -DNDEBUG 
+CXXFLAGS=-Ofast -DNDEBUG 
 CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -msse2 -mfpmath=sse
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 
