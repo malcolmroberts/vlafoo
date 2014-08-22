@@ -1,4 +1,4 @@
-size(10cm,10cm,IgnoreAspect);
+size(10cm,10cm);
 
 import graph;
 import palette;

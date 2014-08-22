@@ -345,7 +345,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       wallouts++;
       std::cout << it << std::flush;
       if(wallouts%10 == 0)
-	std::cout << "\tt=" << tnow << std::endl;
+	std::cout << "\tt=" << tnow << "\tdt=" << dt << std::endl;
       else
 	std::cout<<" ";
     }
