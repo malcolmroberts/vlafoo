@@ -16,7 +16,7 @@ VPATH=.:$(FFTWPP_INCLUDE_PATH)
 %.o : %.cpp %.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
-vlafoo: timestepper.o vlafou.o fftw++.o
+vlafoo: timestepper.o vlafoo.o fftw++.o
 	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 make clean:

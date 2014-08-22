@@ -19,7 +19,7 @@ using namespace Array;
 // A C++ class for solving Vlasov equation
 // with a velocity Fourier transform 
 
-class VlaFou: public timestepper<real>{
+class VlaFoo: public timestepper<real>{
 private:
   int nvk, nxk, nq;
   real PI, dx, dv, k0x, k0v;
@@ -74,7 +74,7 @@ private:
 public:
     
   // Constructor (no default constructor for you!  Ha!)
-  VlaFou(int nx, int nv, real cfl, real eps, real kx, real vmax, 
+  VlaFoo(int nx, int nv, real cfl, real eps, real kx, real vmax, 
 	 std::string &outdir, std::string &rk_name): 
     nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
     // Set parameters:
@@ -134,7 +134,7 @@ public:
   }
 
   // Destructor
-  ~VlaFou() {
+  ~VlaFoo() {
     delete rc_x;
     delete cr_x;
     delete rc_v;

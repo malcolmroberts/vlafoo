@@ -1,11 +1,11 @@
-#include "vlafou.hpp"
+#include "vlafoo.hpp"
 #include <getopt.h>
 #include <stdlib.h>     /* atoi */
 #include <iomanip>      /* setw */
 #include "xstream.h"
 
 // Compute initial condition
-void VlaFou::initial_conditions(std::string & ic){
+void VlaFoo::initial_conditions(std::string & ic){
   real overs2pi=1.0/sqrt(2.0*PI);
 
   f.Load(0.0);
@@ -66,7 +66,7 @@ void VlaFou::initial_conditions(std::string & ic){
   
 }
 
-real VlaFou::interpolate(real x, int nq, real* x0, real* y0)
+real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
 {
   // Lagrange polynomial interpolation
   real val=0;
@@ -93,7 +93,7 @@ real VlaFou::interpolate(real x, int nq, real* x0, real* y0)
   return val;
 }
 
-void VlaFou::transport_x(real dtx)
+void VlaFoo::transport_x(real dtx)
 {
   // Advance f in time, taking accont the A\partial_x f term, with
   // A=diag[v].
@@ -158,7 +158,7 @@ void VlaFou::transport_x(real dtx)
   }
 }
 
-void VlaFou::compute_rho(array2<real> &f)
+void VlaFoo::compute_rho(array2<real> &f)
 {  
   // \rho = \int \approx  dv \sum_j f_j(x,t)
   for(int i=0; i < nx; i++) {
@@ -170,7 +170,7 @@ void VlaFou::compute_rho(array2<real> &f)
   }
 }
 
-void VlaFou::compute_E(array2<real> &f)
+void VlaFoo::compute_E(array2<real> &f)
 {
   // Compute
   // E(x) = \int dx \int_{-vmax}^{vmax} dv f(x,v)
@@ -221,7 +221,7 @@ void VlaFou::compute_E(array2<real> &f)
 #endif
 }
 
-void VlaFou::compute_dfdv(array2<real> &f, array2<real> &S)
+void VlaFoo::compute_dfdv(array2<real> &f, array2<real> &S)
 {
   // compute \partial_v f_i via Fourier differentiation.
   
@@ -251,7 +251,7 @@ void VlaFou::compute_dfdv(array2<real> &f, array2<real> &S)
 
 
 // Compute -E_i \partial_v f_i
-void VlaFou::compute_negEdfdv(array2<real> &f, array2<real> &S)
+void VlaFoo::compute_negEdfdv(array2<real> &f, array2<real> &S)
 {
   compute_E(f);
   compute_dfdv(f,S);
@@ -264,7 +264,7 @@ void VlaFou::compute_negEdfdv(array2<real> &f, array2<real> &S)
   }
 }
 
-void VlaFou::rk_source(real *f0, real *S0)
+void VlaFoo::rk_source(real *f0, real *S0)
 {
   // wrapper for compute_negEdfdv.
 
@@ -274,15 +274,15 @@ void VlaFou::rk_source(real *f0, real *S0)
 }
 
 // Time step dtv of velocity resolution by Fourier
-void VlaFou::transport_v(array2<real> &f, array2<real> &S, real dtv)
+void VlaFoo::transport_v(array2<real> &f, array2<real> &S, real dtv)
 {
   // source term for f_i is -E_i \partial_v f_i and is called via
-  // VlaFou::rk_source.
+  // VlaFoo::rk_source.
 
   rk_step(f(),dtv);
 }
 
-void VlaFou::time_step(real dt)
+void VlaFoo::time_step(real dt)
 {
   // Time-step by Strang splitting.
 
@@ -293,7 +293,7 @@ void VlaFou::time_step(real dt)
   transport_v(f,S,dt);
 }
 
-void VlaFou::solve(int itmax, real tmax, real tsave1, real tsave2)
+void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
 {
   int it=0.0;
   int framenum=0.0;
@@ -383,7 +383,7 @@ void VlaFou::solve(int itmax, real tmax, real tsave1, real tsave2)
   }
 }
 
-void VlaFou::curve(real tnow, real value, const char* fname,
+void VlaFoo::curve(real tnow, real value, const char* fname,
 		   bool clear_file)
 {
   std::string outname;
@@ -401,7 +401,7 @@ void VlaFou::curve(real tnow, real value, const char* fname,
   }
 }
 
-void VlaFou::curves(real tnow, bool clear_file)
+void VlaFoo::curves(real tnow, bool clear_file)
 {
   curve(tnow,compute_kin_energy(),"ekvt",clear_file);
   curve(tnow,compute_elec_energy(),"eEvt",clear_file);
@@ -410,7 +410,7 @@ void VlaFou::curves(real tnow, bool clear_file)
   curve(tnow,fmax(),"ftot",clear_file);
 }
 
-void VlaFou::plot(int framenum)
+void VlaFoo::plot(int framenum)
 {
   // output the 2D field at a given time.  
 
@@ -430,7 +430,7 @@ void VlaFou::plot(int framenum)
   plot_file.close();
 }
 
-real VlaFou::compute_kin_energy()
+real VlaFoo::compute_kin_energy()
 {
   real energy=0.0;
   for(int i=0; i < nx; i++) {
@@ -442,7 +442,7 @@ real VlaFou::compute_kin_energy()
   return energy;
 }
 
-real VlaFou::compute_elec_energy()
+real VlaFoo::compute_elec_energy()
 {
   compute_E(f);
   real energy=0.0;
@@ -452,7 +452,7 @@ real VlaFou::compute_elec_energy()
 }
 
 
-real VlaFou::fmin()
+real VlaFoo::fmin()
 {
   real val=f[0][0];
   
@@ -466,7 +466,7 @@ real VlaFou::fmin()
   return val;
 }
 
-real VlaFou::fmax()
+real VlaFoo::fmax()
 {
   real val=f[0][0];
   
@@ -480,7 +480,7 @@ real VlaFou::fmax()
   return val;
 }
 
-real VlaFou::ftot()
+real VlaFoo::ftot()
 {
   real val=0.0;
   
@@ -492,7 +492,7 @@ real VlaFou::ftot()
   return dx*dv*val;
 }
 
-bool VlaFou::check_for_error()
+bool VlaFoo::check_for_error()
 {
   bool error=false;
   for(int i=0; i < nx; ++i) {
@@ -626,7 +626,7 @@ int main(int argc, char* argv[])
     }
   }
   
-  VlaFou vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name);
+  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name);
   
   if(dt != 0.0) 
     vla.set_dt(dt);
