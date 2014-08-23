@@ -46,7 +46,7 @@ private:
   bool check_for_error();
 
   real interpolate(real x, int nq, real* x0, real*f);
-  void transport_x(real dtx);
+  void transport_x(real &dtx);
 
   void compute_rho(array2<real> &f);// Compute the mean velocity  
   void compute_E(array2<real> &f); // Compute the electric field
@@ -55,7 +55,7 @@ private:
   // Compute the source term due to the electric field.
   void compute_negEdfdv(array2<real> &f, array2<real> &S); 
   // Step velocity by Fourier for the term E \grad_v f
-  void transport_v(array2<real> &f, array2<real> &S, real dtv);
+  void transport_v(array2<real> &f, real &dtv);
 
   // Output
 
@@ -78,7 +78,7 @@ public:
 	 std::string &outdir, std::string &rk_name): 
     nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
     // Set parameters:
-
+    
     // Compute derived parameters:
     PI=4.0*atan((real)1.0);
     L=2.0*PI/kx;
@@ -149,16 +149,15 @@ public:
     rhok.Deallocate();
   }
 
-  void set_dt(real dt0) {dt=dt0;}
+  void set_dt(real new_dt) {dt = new_dt;}
 
   void initial_conditions(std::string &ic); // Compute initial condition
 
   void rk_source(real *f, real *S);
 
   // Full resolution by Strang splitting
-  void time_step(real dt);
+  void time_step(real &dt);
   void solve(int itmax, real tmax, real tsave1, real tsave2);
-  
 };
 
 #include <sstream>
@@ -172,8 +171,8 @@ std::string string(T Number)
 
 // return a mod b
 int mod(int a, int b) {
-  while(a < 0) a+= b;
-  return a%b;
+  while(a < 0) a += b;
+  return a % b;
 }
 
 #include <sys/time.h>

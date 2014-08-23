@@ -2,7 +2,9 @@ CC=g++
 
 LDFLAGS=-lfftw3 -lm
 LDFLAGS+=-lboost_program_options
-CXXFLAGS=-Ofast -DNDEBUG 
+CXXFLAGS=
+CXXFLAGS+=-Ofast -DNDEBUG 
+#CXXFLAGS+=-DNDEBUG 
 CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -msse2 -mfpmath=sse
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 

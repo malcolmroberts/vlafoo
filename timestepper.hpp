@@ -129,11 +129,22 @@ public:
 	
       }
       
+      /*
+      std::cerr << "dt=" << dt << std::endl;
+      std::cout << "is the error too small: " << (error < tolmin) << std::endl;
+      std::cout << "is the error too large: " << (error > tolmax) << std::endl;
+      */
+
       if(error < tolmin)
 	dt *= 1.4;
       if(error > tolmax)
 	dt *= 0.7;
-      //std::cout << "error=" << error<< "\tdt=" << dt << std::endl;
+      
+      /*
+      std::cout << "error=" << error<< "\tdt=" << dt << std::endl;
+      std::cout << "tolmin=" << tolmin<< "\ttolmax=" << tolmax << std::endl;
+      std::cerr << "dt=" << dt << std::endl;
+      */
     }
     
     if(dt < 0) {

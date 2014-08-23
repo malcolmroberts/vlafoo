@@ -97,7 +97,7 @@ real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
   return val;
 }
 
-void VlaFoo::transport_x(real dtx)
+void VlaFoo::transport_x(real &dtx)
 {
   // Advance f in time, taking accont the A\partial_x f term, with
   // A=diag[v].
@@ -133,13 +133,14 @@ void VlaFoo::transport_x(real dtx)
 	x0[q]=x0[0]+q*dx;
 
       for(int q=0; q < nq; q++) {
-	if(abs(x0[q]-xold) > 0.5*L)  x0[q] -= L;
-      }      
+	if(abs(x0[q]-xold) > 0.5*L)
+	  x0[q] -= L;
+      }   
 
       // Find the f-values for the interpolation:
       for(int q=0; q < nq; q++) {
-	//int qi=mod(nleft+i,nx);
-	int qi=(ileft+q)%nx;
+	int qi=mod(nleft+i,nx);
+	//int qi=(ileft+q)%nx;
 
 	f0[q]=f[qi][j]; // NB: periodic in x.
       }
@@ -221,7 +222,6 @@ void VlaFoo::compute_E(array2<real> &f)
   }
   rhok[nxk-1]=0.0; // kill the nyquist
 
-
 #endif
 }
 
@@ -278,7 +278,7 @@ void VlaFoo::rk_source(real *f0, real *S0)
 }
 
 // Time step dtv of velocity resolution by Fourier
-void VlaFoo::transport_v(array2<real> &f, array2<real> &S, real dtv)
+void VlaFoo::transport_v(array2<real> &f, real &dtv)
 {
   // source term for f_i is -E_i \partial_v f_i and is called via
   // VlaFoo::rk_source.
@@ -286,7 +286,7 @@ void VlaFoo::transport_v(array2<real> &f, array2<real> &S, real dtv)
   rk_step(f(),dtv);
 }
 
-void VlaFoo::time_step(real dt)
+void VlaFoo::time_step(real &dt)
 {
   // Time-step by Strang splitting.
 
@@ -294,7 +294,7 @@ void VlaFoo::time_step(real dt)
   transport_x(dt);
 
   // Compute the changes in velocity due to the electric field E:
-  transport_v(f,S,dt);
+  transport_v(f,dt);
 }
 
 void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
@@ -328,22 +328,64 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
   int wallouts=0;
   bool go=true;
 
-  // Make sure that we don't wildly jump past the save points:
-  if(dt > nextsave1)
-    dt = nextsave1;
-  if(dt > nextsave2)
-    dt = nextsave2;
+  int nout1=1;
+  int nout2=1;
+
+  double tsave=std::min(tsave1,tsave2);
 
   while(go) {
-    time_step(dt);
+    it++;
     
+    // Output 2D quantities:
+    if(savenow2 && !error) {
+      nout2++;
+      plot(framenum++);
+      nextsave2 = nout2 * tsave2;
+      //dt=dt0; // restore time-step
+      savenow2=false;
+    }
+
+    // Time-step and increase time
+    tnow += dt; // must be done before time_step, which may change dt.
+    time_step(dt);
+    dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
+
+    // Check for nans and infs.
     error=check_for_error();
     if(error) break;
-    
-    tnow += dt;
-    
-    it++;
 
+    // Output scalar quantities:
+    if(savenow1 && !error) {
+      nout1++;
+      curves(tnow);
+      nextsave1 = nout1 * tsave1;
+      //dt = dt0; // restore time-step
+      savenow1 = false;
+    }
+
+    if(tnow + dt > nextsave1) {
+      //dt0 = dt;
+      dt = nextsave1 - tnow; // shorten dt so that we save at the right time
+      savenow1 = true;
+    }
+
+    if(tnow + dt >= nextsave2) {
+      //dt0=dt;
+      dt = nextsave2 - tnow; // shorten dt so that we save at the right time
+      savenow2 = true;
+    }
+
+    // iteration limits:
+    if(tnow >= tmax) {
+      go = false;
+      std::cout << "reached tmax=" << tmax << std::endl;
+    }
+    if(it >= itmax) {
+      go=false;
+      std::cout << "reached itmax="<<itmax << std::endl;
+    }
+
+    // diagnostic output:
     if(get_wall_time() - wall0 > wallinterval) {
       wall0=get_wall_time();
       wallouts++;
@@ -354,37 +396,6 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
 	std::cout<<" ";
     }
 
-    if(savenow1 && !error) {
-      curves(tnow);
-      nextsave1=tnow+tsave1;
-      dt=dt0; // restore time-step
-      savenow1=false;
-    }
-    
-    if(tnow + dt >= nextsave1) {
-      dt=nextsave1-tnow; // shorten dt so that we save at the right time
-      savenow1=true;
-    }
-
-    if(savenow2 && !error) {
-      plot(framenum++);
-      nextsave2=tnow+tsave2;
-      dt=dt0; // restore time-step
-      savenow2=false;
-    }
-    if(tnow + dt >= nextsave2) {
-      dt=nextsave2-tnow; // shorten dt so that we save at the right time
-      savenow2=true;
-    }
-    if(tnow >= tmax) {
-      go=false;
-      std::cout << "reached tmax="<<tmax << std::endl;
-    }
-    if(it >= itmax) {
-      go=false;
-      std::cout << "reached itmax="<<itmax << std::endl;
-    }
-    
   }
   if(!error) {
     curves(tnow);
