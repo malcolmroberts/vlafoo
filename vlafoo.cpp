@@ -4,6 +4,10 @@
 #include <iomanip>      /* setw */
 #include "xstream.h"
 
+#include <iterator>
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic){
   real overs2pi=1.0/sqrt(2.0*PI);
@@ -526,113 +530,51 @@ int main(int argc, char* argv[])
     else
       std::cout << std::endl;
   }
-  
-  int nx=10;
-  int nv=10;
-  int itmax=1000000;
-  real tmax=10.0;
-  real cfl=0.4;
-  real dt=0.0;
-  real tsave1=0.1;
-  real tsave2=1.0;
-  real kx=0.2;
-  real eps=5e-3;
-  real vmax=6.0;
-  std::string ic="landau";
-  std::string outdir="test";
+
+  int nx;
+  int nv;
+  int itmax;
+  real tmax;
+  real cfl;
+  real dt;
+  real tsave1;
+  real tsave2;
+  real kx;
+  real eps;
+  real vmax;
+  std::string ic;
+  std::string outdir;
   std::string rk_name="euler";
 
-  { // set options
-    static struct option long_options[] = {
-      {"nx",required_argument,0,'x'},
-      {"nv",required_argument,0,'v'},
-      {"tmax",required_argument,0,'t'},
-      {"vmax",required_argument,0,'V'},
-      {"tsave1",required_argument,0,'1'},
-      {"tsave2",required_argument,0,'2'},
-      {"dt",required_argument,0,'T'},
-      {"cfl",required_argument,0,'c'},
-      {"itmax",required_argument,0,'i'},
-      {"eps",required_argument,0,'e'},
-      {"kx",required_argument,0,'k'},
-      {"help",no_argument,0,'h'},
-      {"h",no_argument,0,'h'},
-      {"ic",required_argument,0,'I'},
-      {"outdir",required_argument,0,'D'},
-      {"rk",required_argument,0,'R'},
-      {0,0,0,0}
-    };
-    int opt=0;
-    int long_index=0;
-    while ((opt = getopt_long_only(argc, argv,"", 
-				   long_options, &long_index )) != -1) {
-      switch (opt) {
-      case 'x':
-	nx=atoi(optarg);
-	break;
-      case 'v':
-	nv=atoi(optarg);
-	break;
-      case 't':
-	tmax=atof(optarg);
-	break;
-      case 'V':
-	vmax=atof(optarg);
-	break;
-      case 'T':
-	dt=atof(optarg);
-	break;
-      case 'c':
-	cfl=atof(optarg);
-	break;
-      case '1':
-	tsave1=atof(optarg);
-	break;
-      case '2':
-	tsave2=atof(optarg);
-	break;
-      case 'e':
-	eps=atof(optarg);
-	break;
-      case 'k':
-	kx=atof(optarg);
-	break;
-      case 'i':
-	itmax=atoi(optarg);
-	break;
-      case 'I':
-	// initial conditions ic
-	ic=optarg;
-	break;
-      case 'D':
-	// outdir
-	outdir=optarg;
-	break;
-      case 'R':
-	// outdir
-	rk_name=optarg;
-	break;
-      case 'h':
-	std::cout << "Usage:"
-		  <<"./go " << std::endl
-		  << "-nx <int>" << std::endl
-		  << "-nv <int>" << std::endl
-		  << "-tmax <real>" << std::endl
-		  << "-vmax <real>" << std::endl
-		  << "-dt <real>" << std::endl
-		  << "-cfl <real>" << std::endl
-		  << "-itmax <int>" << std::endl
-		  << "-tsave1 <real>" << std::endl
-		  << "-tsave2 <real>" << std::endl
-		  << "-eps <real>" << std::endl
-		  << "-kx <real>" << std::endl
-		  << "-oudir <string>" << std::endl
-		  << "-ic <landau/doublestream>" << std::endl
-		  << "-rk <euler/rk2>" << std::endl
-		  << std::endl;
-	exit(0);
-      }
-    }
+  std::string config_file;
+  // try {
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "produce help message")
+    ("nx", po::value<int>(&nx)->default_value(10),"nx")
+    ("nv", po::value<int>(&nv)->default_value(10),"nv")
+    ("tmax", po::value<double>(&tmax)->default_value(10.0),"tmax")
+    ("vmax", po::value<double>(&vmax)->default_value(6.0),"vmax")
+    ("tsave1", po::value<double>(&tsave1)->default_value(0.1),"tsave1")
+    ("tsave2", po::value<double>(&tsave2)->default_value(1.0),"tsave2")
+    ("dt", po::value<double>(&dt)->default_value(0.0),"dt")
+    ("cfl", po::value<double>(&cfl)->default_value(0.4),"cfl")
+    ("itmax", po::value<int>(&itmax)->default_value(1000000),"itmax")
+    ("eps", po::value<double>(&eps)->default_value(5e-3),"eps")
+    ("kx", po::value<double>(&kx)->default_value(0.2),"kx")
+    ("ic", po::value<std::string>(&ic)->default_value("landau"),"ic")
+    ("outdir", po::value<std::string>(&outdir)->default_value("test"),"outdir")
+    ("rk_name", po::value<std::string>(&rk_name)->default_value("euler"),
+     "rk_name")
+    ;
+  
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);    
+  
+  if (vm.count("help")) {
+    std::cout << desc << "\n";
+    return 0;
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name);
