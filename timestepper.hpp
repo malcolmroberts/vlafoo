@@ -22,8 +22,9 @@ public:
 
     // FIXME: set parameters via command-line
     dynamic=true;
-    tolmin=0.0003;
-    tolmax=0.0005;
+    //dynamic=false;
+    tolmin=0.00003;
+    tolmax=0.00005;
   }
 
   T max(T a, T b) {
@@ -50,6 +51,7 @@ public:
     if(rk_name == "rk2") {
       rk_stages=2;
       rk=RK2;
+      dynamic=false; // FIXME: temp
     }
 
     if(rk_stages == 0) {
@@ -101,15 +103,19 @@ public:
 
   void rk2_step(T* f, double &dt)
   {
-    T* s=S[0];
+    T* s;
+
+    // FIXME: restore
+    /*
+    s = S[0];
     rk_source(f,s);
-    double halfdt=0.5*dt;
-    for(unsigned int i=0; i < rk_n; i++)
-      f[i] += halfdt*s[i];
-    
-    s=S[1];
+    double halfdt = 0.5 * dt;
+    for(unsigned int i = 0; i < rk_n; i++)
+      f[i] += halfdt * s[i];
+    */
+    s = S[1];
     rk_source(f,s);
-    for(unsigned int i=0; i < rk_n; i++)
+    for(unsigned int i = 0; i < rk_n; i++)
       f[i] += dt*s[i];
 
     if(dynamic) {
@@ -146,11 +152,5 @@ public:
       std::cerr << "dt=" << dt << std::endl;
       */
     }
-    
-    if(dt < 0) {
-      std::cerr << "dt=" << dt << std::endl;
-      exit(1);
-    }
   }
-  
 };

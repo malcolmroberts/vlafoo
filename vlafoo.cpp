@@ -139,8 +139,8 @@ void VlaFoo::transport_x(real &dtx)
 
       // Find the f-values for the interpolation:
       for(int q=0; q < nq; q++) {
-	int qi=mod(nleft+i,nx);
-	//int qi=(ileft+q)%nx;
+	//int qi=mod(nleft+i,nx);
+	int qi=(ileft+q)%nx;
 
 	f0[q]=f[qi][j]; // NB: periodic in x.
       }
@@ -260,10 +260,10 @@ void VlaFoo::compute_negEdfdv(array2<real> &f, array2<real> &S)
   compute_E(f);
   compute_dfdv(f,S);
 
-  for(int i=0; i < nx; ++i) {
-    array1<real>::opt Si=S[i];
-    real Ei=E[i];
-    for(int j=0; j < nv; ++j)
+  for(int i = 0; i < nx; ++i) {
+    array1<real>::opt Si = S[i];
+    real Ei = E[i];
+    for(int j = 0; j < nv; ++j)
       Si[j] *= -Ei;
   }
 }
@@ -341,7 +341,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       nout2++;
       plot(framenum++);
       nextsave2 = nout2 * tsave2;
-      //dt=dt0; // restore time-step
+      dt=dt0; // restore time-step
       savenow2=false;
     }
 
@@ -359,18 +359,18 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       nout1++;
       curves(tnow);
       nextsave1 = nout1 * tsave1;
-      //dt = dt0; // restore time-step
+      dt = dt0; // restore time-step
       savenow1 = false;
     }
 
     if(tnow + dt > nextsave1) {
-      //dt0 = dt;
+      dt0 = dt;
       dt = nextsave1 - tnow; // shorten dt so that we save at the right time
       savenow1 = true;
     }
 
     if(tnow + dt >= nextsave2) {
-      //dt0=dt;
+      if(! savenow1) dt0=dt;
       dt = nextsave2 - tnow; // shorten dt so that we save at the right time
       savenow2 = true;
     }
@@ -575,8 +575,8 @@ int main(int argc, char* argv[])
     ("kx", po::value<double>(&kx)->default_value(0.2),"kx")
     ("ic", po::value<std::string>(&ic)->default_value("landau"),"ic")
     ("outdir", po::value<std::string>(&outdir)->default_value("test"),"outdir")
-    ("rk_name", po::value<std::string>(&rk_name)->default_value("euler"),
-     "rk_name")
+    ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
+     "rk_name: euler or rk2")
     ;
   
   po::variables_map vm;
