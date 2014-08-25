@@ -1,12 +1,28 @@
 CC=g++
 
-LDFLAGS=-lfftw3 -lm
+LDFLAGS=
+#LDFLAGS+=-L$(HOME)/boost
+ifeq ($(strip $(BOOST_LIB)),)
+else
+LDFLAGS+=-L$(BOOST_LIB)
+endif
+
+LDFLAGS+=-lfftw3 -lm
 LDFLAGS+=-lboost_program_options
 CXXFLAGS=
-CXXFLAGS+=-O3 -DNDEBUG 
+CXXFLAGS+=-Ofast -DNDEBUG 
 #CXXFLAGS+=-DNDEBUG 
 CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -msse2 -mfpmath=sse
+
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
+
+
+# Allow the specification of the Booost location:
+ifeq ($(strip $(BOOST_ROOT)),)
+else
+CXXFLAGS+=-I$(BOOST_ROOT)
+endif
+
 
 # Stick to one thread for now:
 CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
