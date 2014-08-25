@@ -1,12 +1,48 @@
+About:
+
+VlaFoo is a 1-dimensional Vlasov solver (1 spatial and 1 velocity
+dimension).  The spatial evolution is handled via a semi-Lagrangian
+approach, and the velocity evolution is handled via a FFT and an
+explicit Runge-Kutta method (either Euler or RK2 currently, with the
+latter using dynamic time-stepping).
+
+
+Compilation:
+
+The command-line aguments are handled by the Boost program_options
+library.  If this is not installed on your sysem, you can download the 
+libraries from boost.org and compile just the program_options by calling
+  ./bootstrap.sh --with-libraries=program_options
+
+Other than that, just run make to produce the vlafoo binary.
+
+
+Test cases:
+
 Landau:
 kx=0.2
 eps=0.05
+
+
+./vlafoo --nx 64 --nv 64 --tmax 100 --dt 0.00001 --tsave2 1 --tsave1 0.01 --kx 0.2 --eps 5e-3 --itmax=100000000 --ic=landau
 
 doublestream:
 kx=0.2
 eps=0.05
 v0=3
 
-./vlafoo -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=landau
+./vlafoo --nx 64 --nv 64 --tmax 100 --dt 0.00001 --tsave2 1 --tsave1 0.01 --kx 0.2 --eps 5e-3 --itmax=100000000 --ic=doublestream --vmax 16
 
-./vlafoo -nx 64 -nv 64 -tmax 100 -dt 0.00001 -tsave2 1 -tsave1 0.01 -kx 0.2 -eps 5e-3 -itmax=100000000 -ic=doublestream -vmax 16
+
+Output:
+
+File with name *vt are tab-separated values with time in the first
+column.  They can be viewed using asymptote using vt.asy.
+
+Files named plot* are 2D outputs snapshots of the velocity
+distribution in space.  They are stored in the XDR format, with the
+first two values giving the spatial and velocity dimensions.  Plot
+files are viewed using either plot.asy (for individual snapshots) or
+with anim.asy to produce animations.
+
+
