@@ -51,7 +51,6 @@ public:
     if(rk_name == "rk2") {
       rk_stages=2;
       rk=RK2;
-      dynamic=false; // FIXME: temp
     }
 
     if(rk_stages == 0) {
