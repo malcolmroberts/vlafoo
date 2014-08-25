@@ -390,7 +390,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       wall0=get_wall_time();
       wallouts++;
       std::cout << it << std::flush;
-      if(wallouts%10 == 0)
+      if(wallouts % 10 == 0)
 	std::cout << "\tt=" << tnow << "\tdt=" << dt << std::endl;
       else
 	std::cout<<" ";
@@ -556,6 +556,8 @@ int main(int argc, char* argv[])
   std::string ic;
   std::string outdir;
   std::string rk_name="euler";
+  bool dynamic;
+  double tolmin, tolmax;
 
   std::string config_file;
   // try {
@@ -577,6 +579,9 @@ int main(int argc, char* argv[])
     ("outdir", po::value<std::string>(&outdir)->default_value("test"),"outdir")
     ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
      "rk_name: euler or rk2")
+    ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
+    ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
+    ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
     ;
   
   po::variables_map vm;
@@ -588,7 +593,7 @@ int main(int argc, char* argv[])
     return 0;
   }
   
-  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name);
+  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);
   
   if(dt != 0.0) 
     vla.set_dt(dt);

@@ -75,7 +75,8 @@ public:
     
   // Constructor (no default constructor for you!  Ha!)
   VlaFoo(int nx, int nv, real cfl, real eps, real kx, real vmax, 
-	 std::string &outdir, std::string &rk_name): 
+	 std::string &outdir, std::string &rk_name, bool dynamic, 
+	 double tolmin, double tolmax): 
     nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
     // Set parameters:
     
@@ -92,7 +93,7 @@ public:
     nq=4; // number of quadrature points
     
     // allocate the time-stepper from the base class
-    rk_allocate(nx*nv,rk_name);
+    rk_allocate(nx*nv,rk_name,dynamic,tolmin,tolmax);
 
     std::cout << "Creating new 1D Vlasov solver:" << std::endl;
     std::cout << "nx\t" << nx << std::endl;
@@ -108,6 +109,9 @@ public:
     std::cout << "cfl\t" << cfl << std::endl;
     std::cout << "Output directory\t" << outdir << std::endl;
     std::cout << "Runge-Kutta method:\t" << rk_name << std::endl;
+    std::cout << "dynamic?:\t" << dynamic << std::endl;
+    std::cout << "tolmin:\t" << tolmin << std::endl;
+    std::cout << "tolmax:\t" << tolmax << std::endl;
 
     // Allocate data arrays (NB: FFTs need real data to be
     // complex-aligned):

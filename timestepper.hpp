@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <assert.h>  
 
 template<class T>
 class timestepper
@@ -23,8 +24,8 @@ public:
     // FIXME: set parameters via command-line
     dynamic=true;
     //dynamic=false;
-    tolmin=0.00003;
-    tolmax=0.00005;
+    tolmin=0.0003;
+    tolmax=0.0005;
   }
 
   T max(T a, T b) {
@@ -39,10 +40,17 @@ public:
     return a;
   }
 
-  void rk_allocate(int n, std::string &rk_name)
+  void rk_allocate(int n, std::string &rk_name, 
+		   bool dynamic0=false, double tolmin0=0.0, double tolmax0=0.0)
   {
     rk_n=n;
     rk_stages=0;
+    dynamic=dynamic0;
+    tolmin=tolmin0;
+    tolmax=tolmax0;
+
+    assert(tolmin < tolmax);
+
     if(rk_name == "euler") {
       rk_stages=1;
       rk=EULER;
@@ -63,7 +71,9 @@ public:
     for(int i=0; i < rk_stages; i++)
       S[i] = new T[rk_n] ;
     rk_allocated=true;
+
   }
+
 
   ~timestepper()
   {
