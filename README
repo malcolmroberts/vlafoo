@@ -13,8 +13,13 @@ The command-line aguments are handled by the Boost program_options
 library.  If this is not installed on your sysem, you can download the 
 libraries from boost.org and compile just the program_options by calling
   ./bootstrap.sh --with-libraries=program_options
+The location of include and link paths can be set with 
+  export BOOST_ROOT=...
+  export BOOST_LIB=...
+and can be run after setting 
+  export LD_LIBRARY_PATH=$(BOOST_LIB)
 
-Other than that, just run make to produce the vlafoo binary.
+Other than that, just run make to produce the vlafoo binary. 
 
 
 Test cases:
