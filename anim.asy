@@ -13,7 +13,9 @@ size(15cm,0);
 
 animation A;
 
+string run=getstring("run");
 string basename=getstring("basename");
+//string basename=getstring("basename");
 int n=getint("n");
 real vmax=6.0;
 real L=31.4159;
@@ -35,7 +37,7 @@ real[][][] ff;
 real fmin=infinity, fmax=-infinity;
 for(int i=0; i < n; ++i) { 
 
-  string filename=basename+string(i);
+  string filename=run+"/"+basename+string(i);
   write(filename);
   //file fin=input(filename).line();
   //real[][] f=fin.dimension(0,0);

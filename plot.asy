@@ -4,9 +4,10 @@ import graph;
 import palette;
 import cooltowarm;
 
+string run=getstring("run");
 string filename=getstring("filename");
 //file fin=input(filename).line();
-file fin=input(filename,mode="xdr");
+file fin=input(run+"/"+filename,mode="xdr");
 
 real[][] f;
 f=fin.read(2);
