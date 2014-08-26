@@ -1,4 +1,4 @@
-size(15cm,10cm,IgnoreAspect);
+size(10cm,8cm,IgnoreAspect);
 
 import graph;
 import palette;
@@ -23,8 +23,10 @@ vmax=getreal("vmax");
 pair a=(0,-vmax);
 pair b=(L,vmax);
 
-int nx=256;
-int nv=201;
+// 256 201
+// 128, 401
+int nx=getint("nx");
+int nv=getint("nv");
 write(f0.length);
 write(nx*nv);
 
@@ -36,12 +38,27 @@ for(int x=0; x < nx; ++x) {
   }
 }
 
+write("min:");
+write(min(f));
+write("max:");
+write(max(f));
+
+real pmin=getreal("pmin");
+real pmax=getreal("pmax");
+
+if(pmin == 0)
+  pmin=min(f);
+if(pmax == 0)
+  pmax=max(f);
 
 pen[] Palette;
-Palette=cooltowarm(min(f),0,max(f));
+Palette=cooltowarm(pmin,0,pmax);
 
 bounds range;
-range=image(f,Full,a,b,Palette);  // Full colour bar
+range=image(f,Range(pmin,pmax),a,b,Palette);  // Full colour bar
+
+xaxis("$x$",BottomTop,LeftTicks,above=true);
+yaxis("$v$",LeftRight,RightTicks,above=true);
 
 
 // Add the palette bar:
