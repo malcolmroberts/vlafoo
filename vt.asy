@@ -1,6 +1,10 @@
 import graph;
+import utils;
 
 size(300,200,IgnoreAspect);
+
+// specify legend for run names:
+// asy vt -u "runlegs=\"asdf,asdf1\""
 
 string runs=getstring("run");
 string file=getstring("file");
@@ -29,7 +33,14 @@ if(file == "ftot") {
 bool docrop=false;
 real tmax=infinity;
 
+
+string runlegs="";
 usersetting();
+
+bool myleg=((runlegs== "") ? false: true);
+string[] legends=set_legends(runlegs);
+
+
 
 string filename;
 int n=-1;
@@ -51,7 +62,8 @@ while(flag) {
     a=transpose(a);
     real[] t=a[0];
     real[] Ek=a[1];
-    draw(graph(t,Ek,t<=tmax),Pen(n),texify(filename));
+    string legend= myleg ? legends[n] : texify(filename);
+    draw(graph(t,Ek,t<=tmax),Pen(n),legend);
     if(docrop) ylimits(7e-2,1e-1,Crop);
   }
 }
