@@ -303,8 +303,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
   int framenum=0.0;
   real tnow=0.0;
 
-  if(itmax < 0) 
-    itmax=INT_MAX;
+  //if(itmax < 0) itmax=INT_MAX;
 
   curves(tnow,true);   // erase contents of output files.
   curves(tnow);
@@ -380,7 +379,7 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       go = false;
       std::cout << "reached tmax=" << tmax << std::endl;
     }
-    if(it >= itmax) {
+    if(itmax > 0 && it >= itmax) {
       go=false;
       std::cout << "reached itmax="<<itmax << std::endl;
     }
