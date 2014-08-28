@@ -78,7 +78,7 @@ for(int i=0; i < n; ++i) {
 	  PaletteTicks(ptick=linewidth(0.5*linewidth())));
   add(bar.fit(),point(E),30E);
 
-  draw(Label(texify(basename)),point(S),10S);
+  draw(Label(texify(run+"/"+basename)),point(S),10S);
   
   A.add(); 
   erase(); 
