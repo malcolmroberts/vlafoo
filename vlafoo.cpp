@@ -690,13 +690,13 @@ int main(int argc, char* argv[])
 	  // NB: we do a lot of casting and catching exceptions so
 	  // that we can cout boost::any.
 	  std::cout << vit->first << "=";
-	  try { std::cout << vm[vit->first].as<double>() << std::endl;
+	  try { std::cout << vit->second.as<double>() << std::endl;
 	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vm[vit->first].as<int>() << std::endl;
+	  try { std::cout << vit->second.as<int>() << std::endl;
 	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vm[vit->first].as<std::string>() << std::endl;
+	  try { std::cout << vit->second.as<std::string>() << std::endl;
 	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vm[vit->first].as<bool>() << std::endl;
+	  try { std::cout << vit->second.as<bool>() << std::endl;
 	  } catch(...) {/* do nothing */ }
 	}
       }
