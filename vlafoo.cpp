@@ -3,10 +3,13 @@
 #include <stdlib.h>     /* atoi */
 #include <iomanip>      /* setw */
 #include "xstream.h"
+#include <fstream>
 
 #include <iterator>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
+
+typedef std::vector< po::basic_option<char> > vec_opt; 
 
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic){
@@ -569,6 +572,12 @@ int main(int argc, char* argv[])
       ("config,c",
        po::value<std::string>(&config_file)->default_value("test/vlafoo.cfg"),
        "name of a file of a configuration.")
+      ;
+    
+    // Declare a group of options that will be allowed both on command
+    // line and in config file
+    po::options_description config("Configuration");
+    config.add_options()
       ("nx", po::value<int>(&nx)->default_value(10),"nx")
       ("nv", po::value<int>(&nv)->default_value(10),"nv")
       ("tmax", po::value<double>(&tmax)->default_value(10.0),"tmax")
@@ -586,12 +595,6 @@ int main(int argc, char* argv[])
       ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
        "rk_name: euler or rk2")
       ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
-      ;
-    
-    // Declare a group of options that will be allowed both on command
-    // line and in config file
-    po::options_description config("Configuration");
-    config.add_options()
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
       ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
       ;
@@ -604,19 +607,99 @@ int main(int argc, char* argv[])
     po::options_description config_file_options;
     config_file_options.add(config);
     
-    // Read the command-line options:
+    // The variables map
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, cmdline_options), vm);
+
+    // Read the command-line options and store in the parsed version
+    // in opts.
+    po::parsed_options cl_opts = po::parse_command_line(argc,argv,
+							cmdline_options);
+    po::store(cl_opts,vm);
     po::notify(vm);    
     
-    // Read the config file:
+    // Read the config file
     std::ifstream ifs(config_file.c_str());
     if (!ifs) {
+      // TODO: create a new file if the file doesn't already exist.
       std::cout << "can not open config file: " << config_file << std::endl;
       return 0;
     } else {
-      store(parse_config_file(ifs, config_file_options), vm);
+      po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
+      store(f_opts, vm);
       notify(vm);
+      
+      // Update the config file with the values from the command line.
+      {
+	// TODO: put this in a function.
+
+	std::cout << "... finding command-line updates:" << std::endl;
+	std::ifstream input(config_file.c_str());
+	std::vector<std::string> lines;
+	{
+	  { // read each line and add to lines:
+	    std::string line;
+	    while(getline(input,line))
+	      lines.push_back(line);
+	  }
+	  
+	  // Search for updates from command-line:
+	  for(vec_opt::iterator ipo = cl_opts.options.begin();
+	      ipo != cl_opts.options.end(); 
+	      ++ipo) {
+	    po::basic_option<char>& l_option = *ipo;
+
+	    // TODO check that the var name is allowed
+	    //if(l_option.string_key != "config") {
+
+	    std::cout << "command line:\t" 
+		      << l_option.string_key 
+		      << "=" 
+		      << l_option.value[0] << std::endl;
+	      
+	    for(unsigned int i=0; i < lines.size(); ++i) {
+	      std::size_t found = lines[i].find(l_option.string_key);
+	      if(found == 0) {
+		//std::cout << "\tfound " << l_option.string_key << std::endl;
+		std::cout << config_file << ":\t" << lines[i] << std::endl;
+	      }
+	    }
+	  }
+	}
+      }
+      
+      std::cout << "... finding missing variables in config file:" << std::endl;
+      for(po::variables_map::iterator vit = vm.begin(); 
+	  vit != vm.end(); 
+	  ++vit) {
+	std::string v_name = vit->first;
+	//std::cout << v_name  << std::endl;
+	
+	bool found=false;
+	
+	for(vec_opt::iterator ipo = f_opts.options.begin();
+	    ipo != f_opts.options.end();
+	    ++ipo) {
+	  po::basic_option<char>& l_option = *ipo;
+	  //if(l_option.string_key != "config") {
+	  //std::cout << l_option.string_key << std::endl;
+
+	  if(v_name == l_option.string_key)
+	    found=true;
+	}
+	if(!found) {
+	  // NB: we do a lot of casting and catching exceptions so
+	  // that we can cout boost::any.
+	  std::cout << vit->first << "=";
+	  try { std::cout << vm[vit->first].as<double>() << std::endl;
+	  } catch(...) {/* do nothing */ }
+	  try { std::cout << vm[vit->first].as<int>() << std::endl;
+	  } catch(...) {/* do nothing */ }
+	  try { std::cout << vm[vit->first].as<std::string>() << std::endl;
+	  } catch(...) {/* do nothing */ }
+	  try { std::cout << vm[vit->first].as<bool>() << std::endl;
+	  } catch(...) {/* do nothing */ }
+	}
+      }
     }
 
     if (vm.count("help")) {
