@@ -102,7 +102,7 @@ public:
     }
   }
 
-  void euler_step(T* f, double &dt)
+  void euler_step(T* f, const double dt)
   {
     rk_source(f,S[0]);
     T* S0=S[0];

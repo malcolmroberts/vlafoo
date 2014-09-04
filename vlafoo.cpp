@@ -77,7 +77,6 @@ real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
   if(nq > 0) {
     // NB: this is probably not the most numerically robust way to do
     // this.
-    
     for(int j=0; j < nq; ++j) {
       real lj=1.0;
       real xj=x0[j];
@@ -467,8 +466,10 @@ real VlaFoo::compute_elec_energy()
 {
   compute_E(f);
   real energy=0.0;
-  for(int i=0; i < nx; i++)
-    energy += dx*E[i]*E[i];
+  for(int i=0; i < nx; i++) {
+    real Ei=E[i];
+    energy += dx*Ei*Ei;
+  }
   return sqrt(energy);
 }
 
@@ -557,39 +558,71 @@ int main(int argc, char* argv[])
   std::string rk_name="euler";
   bool dynamic;
   double tolmin, tolmax;
-
   std::string config_file;
-  // try {
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "produce help message")
-    ("nx", po::value<int>(&nx)->default_value(10),"nx")
-    ("nv", po::value<int>(&nv)->default_value(10),"nv")
-    ("tmax", po::value<double>(&tmax)->default_value(10.0),"tmax")
-    ("vmax", po::value<double>(&vmax)->default_value(6.0),"vmax")
-    ("tsave1", po::value<double>(&tsave1)->default_value(0.1),"tsave1")
-    ("tsave2", po::value<double>(&tsave2)->default_value(1.0),"tsave2")
-    ("dt", po::value<double>(&dt)->default_value(0.0),"dt")
-    ("cfl", po::value<double>(&cfl)->default_value(0.4),"cfl")
-    ("itmax", po::value<int>(&itmax)->default_value(1000000),"itmax")
-    ("eps", po::value<double>(&eps)->default_value(5e-3),"eps")
-    ("kx", po::value<double>(&kx)->default_value(0.2),"kx")
-    ("ic", po::value<std::string>(&ic)->default_value("landau"),"ic")
-    ("outdir", po::value<std::string>(&outdir)->default_value("test"),"outdir")
-    ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
-     "rk_name: euler or rk2")
-    ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
-    ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
-    ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
-    ;
-  
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);    
-  
-  if (vm.count("help")) {
-    std::cout << desc << "\n";
-    return 0;
+
+  // Set up and read the command line and config file.
+  {
+    // try {
+    po::options_description generic("Allowed options");
+    generic.add_options()
+      ("help,h", "produce help message")
+      ("config,c",
+       po::value<std::string>(&config_file)->default_value("test/vlafoo.cfg"),
+       "name of a file of a configuration.")
+      ("nx", po::value<int>(&nx)->default_value(10),"nx")
+      ("nv", po::value<int>(&nv)->default_value(10),"nv")
+      ("tmax", po::value<double>(&tmax)->default_value(10.0),"tmax")
+      ("vmax", po::value<double>(&vmax)->default_value(6.0),"vmax")
+      ("tsave1", po::value<double>(&tsave1)->default_value(0.1),"tsave1")
+      ("tsave2", po::value<double>(&tsave2)->default_value(1.0),"tsave2")
+      ("dt", po::value<double>(&dt)->default_value(0.0),"dt")
+      ("cfl", po::value<double>(&cfl)->default_value(0.4),"cfl")
+      ("itmax", po::value<int>(&itmax)->default_value(1000000),"itmax")
+      ("eps", po::value<double>(&eps)->default_value(5e-3),"eps")
+      ("kx", po::value<double>(&kx)->default_value(0.2),"kx")
+      ("ic", po::value<std::string>(&ic)->default_value("landau"),"ic")
+      ("outdir", po::value<std::string>(&outdir)->default_value("test"),
+       "outdir")
+      ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
+       "rk_name: euler or rk2")
+      ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
+      ;
+    
+    // Declare a group of options that will be allowed both on command
+    // line and in config file
+    po::options_description config("Configuration");
+    config.add_options()
+      ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
+      ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
+      ;
+    
+    // Options for the command line:
+    po::options_description cmdline_options;
+    cmdline_options.add(generic).add(config);
+    
+    // Options for the config file:
+    po::options_description config_file_options;
+    config_file_options.add(config);
+    
+    // Read the command-line options:
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, cmdline_options), vm);
+    po::notify(vm);    
+    
+    // Read the config file:
+    std::ifstream ifs(config_file.c_str());
+    if (!ifs) {
+      std::cout << "can not open config file: " << config_file << std::endl;
+      return 0;
+    } else {
+      store(parse_config_file(ifs, config_file_options), vm);
+      notify(vm);
+    }
+
+    if (vm.count("help")) {
+      std::cout << generic << std::endl;;
+      return 0;
+    }
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);

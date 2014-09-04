@@ -10,9 +10,13 @@ endif
 LDFLAGS+=-lfftw3 -lm
 LDFLAGS+=-lboost_program_options
 CXXFLAGS=
-CXXFLAGS+=-Ofast -DNDEBUG 
-#CXXFLAGS+=-DNDEBUG 
-CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -msse2 -mfpmath=sse
+CXXFLAGS+=-Ofast
+CXXFLAGS+=-DNDEBUG 
+CXXFLAGS+=-ftree-vectorize 
+#CXXFLAGS+=-ftree-vectorizer-verbose=1
+CXXFLAGS+=-march=native -mtune=native
+#CXXFLAGS+=-mavx
+CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -mavx -mfpmath=sse
 
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 
