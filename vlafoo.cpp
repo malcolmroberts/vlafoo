@@ -12,12 +12,17 @@ namespace po = boost::program_options;
 typedef std::vector< po::basic_option<char> > vec_opt; 
 
 // Compute initial condition
-void VlaFoo::initial_conditions(std::string & ic){
+void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
   real overs2pi=1.0/sqrt(2.0*PI);
 
   f.Load(0.0);
   
   // for(int ix=0;ix<nx;ix++) f[ix][1]=1.0;
+
+  if(ic == "restart") {
+    read_restart(tnow,dt);
+    return;
+  }
 
   if(ic == "test0") {
     f[0][nv/4]=1.0;
@@ -298,11 +303,10 @@ void VlaFoo::time_step(real &dt)
   transport_v(f,dt);
 }
 
-void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
+void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
 {
   int it=0.0;
   int framenum=0.0;
-  real tnow=0.0;
 
   //if(itmax < 0) itmax=INT_MAX;
 
@@ -365,13 +369,15 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
 
     if(tnow + dt > nextsave1) {
       dt0 = dt;
-      dt = nextsave1 - tnow; // shorten dt so that we save at the right time
+      // Shorten dt so that we save at the right time
+      dt = nextsave1 - tnow; 
       savenow1 = true;
     }
 
     if(tnow + dt >= nextsave2) {
       if(! savenow1) dt0=dt;
-      dt = nextsave2 - tnow; // shorten dt so that we save at the right time
+      // Shorten dt so that we save at the right time
+      dt = nextsave2 - tnow; 
       savenow2 = true;
     }
 
@@ -390,15 +396,18 @@ void VlaFoo::solve(int itmax, real tmax, real tsave1, real tsave2)
       wall0=get_wall_time();
       wallouts++;
       std::cout << it << std::flush;
-      if(wallouts % 10 == 0)
+      if(wallouts % 10 == 0) {
+	write_restart(tnow,dt);
 	std::cout << "\tt=" << tnow << "\tdt=" << dt << std::endl;
-      else
+      } else {
 	std::cout<<" ";
+      }
     }
 
   }
   if(!error) {
     curves(tnow);
+    write_restart(tnow,dt);
     std::cout << "final time t=" << tnow << "\n" << std::endl;
   } else {
     std::cout << "Finished on error" << std::endl;
@@ -414,7 +423,7 @@ void VlaFoo::curve(real tnow, real value, const char* fname,
   outname.append(fname);
   std::ofstream plot_file;
   if(clear_file) {
-    plot_file.open(outname.c_str());
+    plot_file.open(outname.c_str(), std::ofstream::out | std::ofstream::trunc);
     plot_file.close();
   } else {
     plot_file.open(outname.c_str(),std::fstream::app);
@@ -450,6 +459,35 @@ void VlaFoo::plot(int framenum)
     for(int j=0; j < nv; j++)
       plot_file << f[i][j];
   plot_file.close();
+}
+
+void VlaFoo::write_restart(const double tnow, const double dt)
+{
+  // Write to the restart file
+  xdr::oxstream xout;
+  std::string path_file=outdir+"/"+restart_filename;
+  xout.open(path_file.c_str());
+  
+  xout << tnow << dt;
+  for(int i=0; i < nx; i++)
+    for(int j=0; j < nv; j++)
+      xout << f[i][j];
+  xout.close();
+}
+
+void VlaFoo::read_restart(double &tnow, double & dt)
+{
+  // Write to the restart file
+  xdr::ixstream xin;
+  std::string path_file=outdir+"/"+restart_filename;
+  xin.open(path_file.c_str());
+  
+  xin >> tnow;
+  xin >> dt;
+  for(int i=0; i < nx; i++)
+    for(int j=0; j < nv; j++)
+      xin >> f[i][j];
+  xin.close();
 }
 
 real VlaFoo::compute_kin_energy()
@@ -619,65 +657,85 @@ int main(int argc, char* argv[])
     // Read the config file
     std::ifstream ifs(config_file.c_str());
     if (!ifs) {
-      // TODO: create a new file if the file doesn't already exist.
-      std::cout << "can not open config file: " << config_file << std::endl;
-      return 0;
-    } else {
-      po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
-      store(f_opts, vm);
-      notify(vm);
+      std::cout << "Creating empty config file" << std::endl;
+      std::ofstream outfile;
+      outfile.open(config_file.c_str(), 
+		   std::ofstream::out | std::ofstream::trunc);
+      outfile.close();
+      ifs.open(config_file.c_str()); // repoen the file
+    }
       
-      // Update the config file with the values from the command line.
-      {
-	// Read the config file and store it line-by-line.
-	std::ifstream input(config_file.c_str());
-	std::vector<std::string> lines;
-	{ // read each line and add to lines:
-	  std::string line;
-	  while(getline(input,line))
-	    lines.push_back(line);
-	}
-	input.close();
+    po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
+    store(f_opts, vm);
+    notify(vm);
+    ifs.close();
+ 
+    // Update the config file with the values from the command line.
+    {
+      // Read the config file and store it line-by-line.
+      std::ifstream input(config_file.c_str());
+      std::vector<std::string> lines;
+      { // read each line and add to lines:
+	std::string line;
+	while(getline(input,line))
+	  lines.push_back(line);
+      }
+      input.close();
 
-	// Re-write the config file, line-by-line, replacing old
-	// values with new values from the command-line.
-	std::ofstream outfile;	  
-	outfile.open(config_file.c_str());
+      // Re-write the config file, line-by-line, replacing old
+      // values with new values from the command-line.
+      std::ofstream outfile;
+      outfile.open(config_file.c_str(),
+		   std::ofstream::out | std::ofstream::trunc);
 	
-	for(unsigned int i=0; i < lines.size(); ++i) {
-	  // Search for updates from command-line:
-	  for(vec_opt::iterator ipo = cl_opts.options.begin();
-	      ipo != cl_opts.options.end(); 
-	      ++ipo) {
-	    po::basic_option<char>& l_option = *ipo;
+      for(unsigned int i=0; i < lines.size(); ++i) {
+	// Search for updates from command-line:
+	for(vec_opt::iterator ipo = cl_opts.options.begin();
+	    ipo != cl_opts.options.end(); 
+	    ++ipo) {
+	  po::basic_option<char>& l_option = *ipo;
 
-	    // TODO check that the var name is allowed
-	    if(l_option.string_key != "config") {
-	      std::size_t found = lines[i].find(l_option.string_key);
-	      if(found == 0) {
-		// Replace the line with the new value
-		outfile << l_option.string_key 
-			<< "="
-			<< l_option.value[0] << std::endl;
-		/*
+	  // TODO check that the var name is allowed
+	  if(l_option.string_key != "config") {
+	    std::size_t found = lines[i].find(l_option.string_key);
+	    if(found == 0) {
+	      // Replace the line with the new value
+	      outfile << l_option.string_key 
+		      << "="
+		      << l_option.value[0] << std::endl;
+	      /*
 		std::cout << "command line:\t"
-			  << l_option.string_key 
-			  << "=" 
-			  << l_option.value[0] << std::endl;
+		<< l_option.string_key 
+		<< "=" 
+		<< l_option.value[0] << std::endl;
 		std::cout << "\tfound " << l_option.string_key << std::endl;
 		std::cout << config_file << ":\t" << lines[i] << std::endl;
-		*/
-	      } else {
-		// Keep the original line
-		outfile << lines[i] << std::endl;
-	      }
+	      */
+	    } else {
+	      // Keep the original line
+	      //std::cout << lines[i] << std::endl;
+	      outfile << lines[i] << std::endl;
 	    }
 	  }
 	}
-	outfile.close();
       }
+      outfile.close();
+    }
      
-      // Add the any missing entries to the config file.
+    // Add the any missing entries to the config file.
+    {
+      std::ifstream input(config_file.c_str());
+      std::vector<std::string> lines;
+      { // read each line and add to lines:
+	std::string line;
+	while(getline(input,line))
+	  lines.push_back(line);
+      }
+      input.close();
+
+      std::ofstream outfile;
+      outfile.open(config_file.c_str(), std::ios_base::app);
+
       for(po::variables_map::iterator vit = vm.begin(); 
 	  vit != vm.end(); 
 	  ++vit) {
@@ -688,26 +746,17 @@ int main(int argc, char* argv[])
 	  // TODO: instead of just checking config, check against
 	  // disallowed config-file variables.
 
-	  bool found=false;
+	  bool var_in_file=false;
 	
-	  for(vec_opt::iterator ipo = f_opts.options.begin();
-	      ipo != f_opts.options.end();
-	      ++ipo) {
-	    po::basic_option<char>& l_option = *ipo;
-	    //std::cout << l_option.string_key << std::endl;
-	    //if(l_option.string_key != "config") {
-	    
-	    if(v_name == l_option.string_key)
-	      found=true;
-	    //}
-	  }
+	  for(unsigned int i=0; i < lines.size(); ++i)
+	    if(lines[i].find(vit->first) == 0)
+	      var_in_file=true;
 	  
-	  if(!found) {
+	  if(!var_in_file) {
+	    // The variable is not in the config file, so add it.
+
 	    // NB: we do a lot of casting and catching exceptions so
 	    // that we can cout boost::any.
-	  
-	    std::ofstream outfile;
-	    outfile.open(config_file.c_str(), std::ios_base::app);
 	    outfile  << vit->first
 		     << "=" ;
 	    try { outfile << vit->second.as<double>();
@@ -719,10 +768,10 @@ int main(int argc, char* argv[])
 	    try { outfile  << vit->second.as<bool>();
 	    } catch(...) {/* do nothing */ }
 	    outfile << std::endl;
-	    outfile.close();
 	  }
 	}
       }
+      outfile.close();
     }
 
     if (vm.count("help")) {
@@ -737,10 +786,11 @@ int main(int argc, char* argv[])
     vla.set_dt(dt);
     
   std::cout << "Setting up initial conditions..." << std::endl;
-  vla.initial_conditions(ic);
+  double tnow=0.0;
+  vla.initial_conditions(ic,tnow,dt);
 
   std::cout << "Solving..." << std::endl;
-  vla.solve(itmax,tmax,tsave1,tsave2);
+  vla.solve(tnow,itmax,tmax,tsave1,tsave2);
   
   std::cout << "Done." << std::endl;
 

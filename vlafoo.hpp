@@ -41,23 +41,24 @@ private:
   real eps, kx; // Landau damping parameters 
   real L, vmax;
   std::string outdir;
+  std::string restart_filename;
   
-  real index2v(int j) {return j*dv-vmax;}
+  real index2v(int j) {return j*dv - vmax;}
   bool check_for_error();
 
   real interpolate(real x, int nq, real* x0, real*f);
   void transport_x(real &dtx);
 
-  void compute_rho(array2<real> &f);// Compute the mean velocity  
+  void compute_rho(array2<real> &f);// Compute the mean velocity
   void compute_E(array2<real> &f); // Compute the electric field
   // Compute the source term due to the electric field.
-  void compute_dfdv(array2<real> &f, array2<real> &S); 
+  void compute_dfdv(array2<real> &f, array2<real> &S);
   // Compute the source term due to the electric field.
-  void compute_negEdfdv(array2<real> &f, array2<real> &S); 
+  void compute_negEdfdv(array2<real> &f, array2<real> &S);
   // Step velocity by Fourier for the term E \grad_v f
   void transport_v(array2<real> &f, real &dtv);
 
-  // Output
+  // Output:
 
   // functions to compute output quantities:
   real compute_kin_energy();
@@ -70,6 +71,9 @@ private:
   void curve(real tnow, real value, const char *fname, bool clear_file);
   // 2D output:
   void plot(int it);
+
+  void write_restart(const double tnow, const double dt);
+  void read_restart(double & tnow, double & dt);
 
 public:
     
@@ -92,7 +96,7 @@ public:
     nxk=nx/2+1;
     nq=4; // number of quadrature points
     
-    // allocate the time-stepper from the base class
+    // Allocate the time-stepper from the base class
     rk_allocate(nx*nv,rk_name,dynamic,tolmin,tolmax);
 
     std::cout << "Creating new 1D Vlasov solver:" << std::endl;
@@ -129,10 +133,12 @@ public:
     rc_x=new fftwpp::rcfft1d(nx,rho,rhok);
     cr_x=new fftwpp::crfft1d(nx,rhok,rho);
 
+    restart_filename="restart";
+
     int mkdirnotok=mkdir(outdir.c_str(),S_IRWXU);
     if(mkdirnotok) {
       // TODO: this claims to fail if directory is already present.
-      //std::cout << "ERROR: mkdir failed!" << std::endl;
+      // std::cout << "ERROR: mkdir failed!" << std::endl;
     }
     
   }
@@ -155,13 +161,14 @@ public:
 
   void set_dt(real new_dt) {dt = new_dt;}
 
-  void initial_conditions(std::string &ic); // Compute initial condition
+ // Set initial conditions
+  void initial_conditions(std::string &ic, double &tnow, double &dt);
 
   void rk_source(real *f, real *S);
 
   // Full resolution by Strang splitting
   void time_step(real &dt);
-  void solve(int itmax, real tmax, real tsave1, real tsave2);
+  void solve(double tnow, int itmax, real tmax, real tsave1, real tsave2);
 };
 
 #include <sstream>
