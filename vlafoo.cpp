@@ -70,7 +70,6 @@ void VlaFoo::initial_conditions(std::string & ic){
   std::cout << "Abort: no initial conditions found matching " 
 	    << ic << std::endl;
   exit(1);
-  
 }
 
 real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
@@ -630,18 +629,22 @@ int main(int argc, char* argv[])
       
       // Update the config file with the values from the command line.
       {
-	// TODO: put this in a function.
-
-	std::cout << "... finding command-line updates:" << std::endl;
+	// Read the config file and store it line-by-line.
 	std::ifstream input(config_file.c_str());
 	std::vector<std::string> lines;
-	{
-	  { // read each line and add to lines:
-	    std::string line;
-	    while(getline(input,line))
-	      lines.push_back(line);
-	  }
-	  
+	{ // read each line and add to lines:
+	  std::string line;
+	  while(getline(input,line))
+	    lines.push_back(line);
+	}
+	input.close();
+
+	// Re-write the config file, line-by-line, replacing old
+	// values with new values from the command-line.
+	std::ofstream outfile;	  
+	outfile.open(config_file.c_str());
+	
+	for(unsigned int i=0; i < lines.size(); ++i) {
 	  // Search for updates from command-line:
 	  for(vec_opt::iterator ipo = cl_opts.options.begin();
 	      ipo != cl_opts.options.end(); 
@@ -649,61 +652,81 @@ int main(int argc, char* argv[])
 	    po::basic_option<char>& l_option = *ipo;
 
 	    // TODO check that the var name is allowed
-	    //if(l_option.string_key != "config") {
-
-	    std::cout << "command line:\t" 
-		      << l_option.string_key 
-		      << "=" 
-		      << l_option.value[0] << std::endl;
-	      
-	    for(unsigned int i=0; i < lines.size(); ++i) {
+	    if(l_option.string_key != "config") {
 	      std::size_t found = lines[i].find(l_option.string_key);
 	      if(found == 0) {
-		//std::cout << "\tfound " << l_option.string_key << std::endl;
+		// Replace the line with the new value
+		outfile << l_option.string_key 
+			<< "="
+			<< l_option.value[0] << std::endl;
+		/*
+		std::cout << "command line:\t"
+			  << l_option.string_key 
+			  << "=" 
+			  << l_option.value[0] << std::endl;
+		std::cout << "\tfound " << l_option.string_key << std::endl;
 		std::cout << config_file << ":\t" << lines[i] << std::endl;
+		*/
+	      } else {
+		// Keep the original line
+		outfile << lines[i] << std::endl;
 	      }
 	    }
 	  }
 	}
+	outfile.close();
       }
-      
-      std::cout << "... finding missing variables in config file:" << std::endl;
+     
+      // Add the any missing entries to the config file.
       for(po::variables_map::iterator vit = vm.begin(); 
 	  vit != vm.end(); 
 	  ++vit) {
 	std::string v_name = vit->first;
 	//std::cout << v_name  << std::endl;
 	
-	bool found=false;
-	
-	for(vec_opt::iterator ipo = f_opts.options.begin();
-	    ipo != f_opts.options.end();
-	    ++ipo) {
-	  po::basic_option<char>& l_option = *ipo;
-	  //if(l_option.string_key != "config") {
-	  //std::cout << l_option.string_key << std::endl;
+	if(v_name != "config") {
+	  // TODO: instead of just checking config, check against
+	  // disallowed config-file variables.
 
-	  if(v_name == l_option.string_key)
-	    found=true;
-	}
-	if(!found) {
-	  // NB: we do a lot of casting and catching exceptions so
-	  // that we can cout boost::any.
-	  std::cout << vit->first << "=";
-	  try { std::cout << vit->second.as<double>() << std::endl;
-	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vit->second.as<int>() << std::endl;
-	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vit->second.as<std::string>() << std::endl;
-	  } catch(...) {/* do nothing */ }
-	  try { std::cout << vit->second.as<bool>() << std::endl;
-	  } catch(...) {/* do nothing */ }
+	  bool found=false;
+	
+	  for(vec_opt::iterator ipo = f_opts.options.begin();
+	      ipo != f_opts.options.end();
+	      ++ipo) {
+	    po::basic_option<char>& l_option = *ipo;
+	    //std::cout << l_option.string_key << std::endl;
+	    //if(l_option.string_key != "config") {
+	    
+	    if(v_name == l_option.string_key)
+	      found=true;
+	    //}
+	  }
+	  
+	  if(!found) {
+	    // NB: we do a lot of casting and catching exceptions so
+	    // that we can cout boost::any.
+	  
+	    std::ofstream outfile;
+	    outfile.open(config_file.c_str(), std::ios_base::app);
+	    outfile  << vit->first
+		     << "=" ;
+	    try { outfile << vit->second.as<double>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile << vit->second.as<int>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile << vit->second.as<std::string>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile  << vit->second.as<bool>();
+	    } catch(...) {/* do nothing */ }
+	    outfile << std::endl;
+	    outfile.close();
+	  }
 	}
       }
     }
 
     if (vm.count("help")) {
-      std::cout << generic << std::endl;;
+      std::cout << generic << std::endl;
       return 0;
     }
   }
