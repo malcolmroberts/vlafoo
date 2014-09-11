@@ -43,16 +43,18 @@ write(min(f));
 write("max:");
 write(max(f));
 
-real pmin=getreal("pmin");
-real pmax=getreal("pmax");
+real pmin=min(f);
+real pmax=max(f);
 
-if(pmin == 0)
-  pmin=min(f);
-if(pmax == 0)
-  pmax=max(f);
-
+if(getstring("Manually set pallette limits (y/n)")== "y") {
+  pmin=getreal("pmin");
+  pmax=getreal("pmax");
+}
 pen[] Palette;
-Palette=cooltowarm(pmin,0,pmax);
+if(pmin < 0)
+  Palette=cooltowarm(pmin,0,pmax);
+else 
+  Palette=whitetowarm;
 
 bounds range;
 range=image(f,Range(pmin,pmax),a,b,Palette);  // Full colour bar
