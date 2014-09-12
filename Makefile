@@ -18,8 +18,12 @@ CXXFLAGS+=-march=native -mtune=native
 #CXXFLAGS+=-mavx
 CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -mavx -mfpmath=sse
 
+
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 
+ifneq ($(strip $(FFTW_INCLUDE_PATH)),)
+CXXFLAGS+=-I$(FFTW_INCLUDE_PATH)
+endif
 
 # Allow the specification of the Booost location:
 ifeq ($(strip $(BOOST_ROOT)),)
