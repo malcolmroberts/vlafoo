@@ -11,6 +11,26 @@ namespace po = boost::program_options;
 
 typedef std::vector< po::basic_option<char> > vec_opt; 
 
+
+void show_vm(po::variables_map vm)
+{
+  for(po::variables_map::iterator vit = vm.begin(); 
+      vit != vm.end(); 
+      ++vit) {
+    std::cout << vit->first << "=";
+    try { std::cout << vit->second.as<double>();
+    } catch(...) {/* do nothing */ }
+    try { std::cout << vit->second.as<int>();
+    } catch(...) {/* do nothing */ }
+    try { std::cout << vit->second.as<std::string>();
+    } catch(...) {/* do nothing */ }
+    try { std::cout  << vit->second.as<bool>();
+    } catch(...) {/* do nothing */ }
+    std::cout << std::endl;
+  }
+}
+
+
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
   real overs2pi=1.0/sqrt(2.0*PI);
@@ -322,6 +342,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   real nextsave2=tnow+tsave2;
 
   std::cout << "t=" << tnow << std::endl;
+  std::cout << "tmax=" << tmax << std::endl;
   std::cout << "dt=" << dt << std::endl;
   std::cout << "time-stepping...\n" << std::endl;
   
@@ -336,10 +357,14 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   int nout2=1;
 
   double tsave=std::min(tsave1,tsave2);
+  dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
+
+
 
   while(go) {
     it++;
-    
+    //std::cout << "t=" << tnow << std::endl; // FIXME: temp
+    //std::cout << "dt=" << dt << std::endl; // FIXME: temp
     // Output 2D quantities:
     if(savenow2 && !error) {
       nout2++;
@@ -362,7 +387,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     if(savenow1 && !error) {
       nout1++;
       curves(tnow);
-      nextsave1 = nout1 * tsave1;
+      nextsave1 = nout1 * tsave1;   // FIXME: does not account for restarts!
       dt = dt0; // restore time-step
       savenow1 = false;
     }
@@ -467,7 +492,8 @@ void VlaFoo::write_restart(const double tnow, const double dt)
   xdr::oxstream xout;
   std::string path_file=outdir+"/"+restart_filename;
   xout.open(path_file.c_str());
-  
+ 
+
   xout << tnow << dt;
   for(int i=0; i < nx; i++)
     for(int j=0; j < nv; j++)
@@ -481,13 +507,22 @@ void VlaFoo::read_restart(double &tnow, double & dt)
   xdr::ixstream xin;
   std::string path_file=outdir+"/"+restart_filename;
   xin.open(path_file.c_str());
-  
-  xin >> tnow;
-  xin >> dt;
-  for(int i=0; i < nx; i++)
-    for(int j=0; j < nv; j++)
-      xin >> f[i][j];
-  xin.close();
+  if(xin) {  
+    xin >> tnow;
+    xin >> dt;
+    for(int i=0; i < nx; i++)
+      for(int j=0; j < nv; j++)
+	xin >> f[i][j];
+    xin.close();
+  } else {
+    std::cout << "restart file " 
+	      << path_file 
+	      << " does not exist" 
+	      << std::endl;
+    exit(1);
+  }
+  std::cout << "t=" << tnow << std::endl; // FIXME: temp
+  std::cout << "dt=" << dt << std::endl; // FIXME: temp
 }
 
 real VlaFoo::compute_kin_energy()
@@ -652,7 +687,7 @@ int main(int argc, char* argv[])
     po::parsed_options cl_opts = po::parse_command_line(argc,argv,
 							cmdline_options);
     po::store(cl_opts,vm);
-    po::notify(vm);    
+    //po::notify(vm);
     
     // Read the config file
     std::ifstream ifs(config_file.c_str());
@@ -670,9 +705,12 @@ int main(int argc, char* argv[])
     notify(vm);
     ifs.close();
  
-    // Update the config file with the values from the command line.
+
+    // Add the any missing entries to the config file.
+    //if(false) // FIXME: temp
     {
-      // Read the config file and store it line-by-line.
+      std::cout << "Add missing values to the config file"
+		<< std::endl;
       std::ifstream input(config_file.c_str());
       std::vector<std::string> lines;
       { // read each line and add to lines:
@@ -681,6 +719,71 @@ int main(int argc, char* argv[])
 	  lines.push_back(line);
       }
       input.close();
+
+      std::ofstream outfile;
+      outfile.open(config_file.c_str(), std::ios_base::app);
+
+      for(po::variables_map::iterator vit = vm.begin(); 
+	  vit != vm.end(); 
+	  ++vit) {
+	std::string v_name = vit->first;
+	std::cout << v_name  << std::endl;
+	
+	if(v_name != "config") {
+	  // TODO: instead of just checking config, check against
+	  // disallowed config-file variables.
+
+	  bool var_in_file=false;
+	
+	  for(unsigned int i=0; i < lines.size(); ++i)
+	    if(lines[i].find(vit->first) == 0)
+	      var_in_file=true;
+	  
+	  if(!var_in_file) {
+	    // The variable is not in the config file, so add it.
+
+	    std::cout << "val missing in config; adding" << std::endl;
+
+	    // NB: we do a lot of casting and catching exceptions so
+	    // that we can cout boost::any.
+	    outfile  << vit->first
+		     << "=" ;
+	    try { outfile << vit->second.as<double>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile << vit->second.as<int>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile << vit->second.as<std::string>();
+	    } catch(...) {/* do nothing */ }
+	    try { outfile  << vit->second.as<bool>();
+	    } catch(...) {/* do nothing */ }
+	    outfile << std::endl;
+	  }
+	}
+      }
+      outfile.close();
+    }
+
+
+    // Update the config file with the values from the command line.
+    {
+      std::cout << "update config file with values from command-line" 
+		<< std::endl;
+
+      // Read the config file and store it, line-by-line, in lines.
+      std::ifstream input(config_file.c_str());
+      std::vector<std::string> lines;
+      { // read each line and add to lines:
+	std::string line;
+	while(getline(input,line))
+	  lines.push_back(line);
+      }
+      input.close();
+
+      std::cout << "Lines from config file:" << std::endl;
+      for(unsigned int i=0; i < lines.size(); ++i) {
+	std::cout << lines[i] << std::endl;
+      }
+      std::cout << std::endl;
 
       // Re-write the config file, line-by-line, replacing old
       // values with new values from the command-line.
@@ -695,10 +798,13 @@ int main(int argc, char* argv[])
 	    ++ipo) {
 	  po::basic_option<char>& l_option = *ipo;
 
-	  // TODO check that the var name is allowed
+	  // TODO improve the check if var name is allowed
 	  if(l_option.string_key != "config") {
+
 	    std::size_t found = lines[i].find(l_option.string_key);
 	    if(found == 0) {
+	      std::cout <<  l_option.string_key << std::endl;
+	      std::cout << "\tadding to config file" << std::endl;
 	      // Replace the line with the new value
 	      outfile << l_option.string_key 
 		      << "="
@@ -722,62 +828,11 @@ int main(int argc, char* argv[])
       outfile.close();
     }
      
-    // Add the any missing entries to the config file.
-    {
-      std::ifstream input(config_file.c_str());
-      std::vector<std::string> lines;
-      { // read each line and add to lines:
-	std::string line;
-	while(getline(input,line))
-	  lines.push_back(line);
-      }
-      input.close();
-
-      std::ofstream outfile;
-      outfile.open(config_file.c_str(), std::ios_base::app);
-
-      for(po::variables_map::iterator vit = vm.begin(); 
-	  vit != vm.end(); 
-	  ++vit) {
-	std::string v_name = vit->first;
-	//std::cout << v_name  << std::endl;
-	
-	if(v_name != "config") {
-	  // TODO: instead of just checking config, check against
-	  // disallowed config-file variables.
-
-	  bool var_in_file=false;
-	
-	  for(unsigned int i=0; i < lines.size(); ++i)
-	    if(lines[i].find(vit->first) == 0)
-	      var_in_file=true;
-	  
-	  if(!var_in_file) {
-	    // The variable is not in the config file, so add it.
-
-	    // NB: we do a lot of casting and catching exceptions so
-	    // that we can cout boost::any.
-	    outfile  << vit->first
-		     << "=" ;
-	    try { outfile << vit->second.as<double>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile << vit->second.as<int>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile << vit->second.as<std::string>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile  << vit->second.as<bool>();
-	    } catch(...) {/* do nothing */ }
-	    outfile << std::endl;
-	  }
-	}
-      }
-      outfile.close();
-    }
-
     if (vm.count("help")) {
       std::cout << generic << std::endl;
       return 0;
     }
+    show_vm(vm);
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);
@@ -788,6 +843,8 @@ int main(int argc, char* argv[])
   std::cout << "Setting up initial conditions..." << std::endl;
   double tnow=0.0;
   vla.initial_conditions(ic,tnow,dt);
+
+  std::cout << tnow << std::endl;
 
   std::cout << "Solving..." << std::endl;
   vla.solve(tnow,itmax,tmax,tsave1,tsave2);
