@@ -9,7 +9,7 @@ import animate;
 //settings.thick=false;
 settings.outformat="mp4";
  
-size(15cm,0); 
+size(10cm,10cm,IgnoreAspect); 
 
 animation A;
 
@@ -35,6 +35,8 @@ real[][][] ff;
 
 // find the image pallette bounds globallly:
 real fmin=infinity, fmax=-infinity;
+real t[] = new real[n];
+
 for(int i=0; i < n; ++i) { 
 
   string filename=run+"/"+basename+string(i);
@@ -43,8 +45,11 @@ for(int i=0; i < n; ++i) {
   //real[][] f=fin.dimension(0,0);
   
   file fin=input(filename,mode="xdr");
-  real[][] f=fin.read(2);
 
+  t[i]=fin;
+  
+  real[][] f=fin.read(2);
+ 
   ff[i]=f;
   
   if(min(f) < fmin) fmin=min(f);
@@ -78,7 +83,7 @@ for(int i=0; i < n; ++i) {
 	  PaletteTicks(ptick=linewidth(0.5*linewidth())));
   add(bar.fit(),point(E),30E);
 
-  draw(Label(texify(run+"/"+basename)),point(S),10S);
+  draw(Label(texify(run+"/"+basename+" t="+string(t[i]))),point(S),10S);
   
   A.add(); 
   erase(); 

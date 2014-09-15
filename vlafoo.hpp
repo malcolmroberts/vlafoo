@@ -75,7 +75,7 @@ private:
   void curves(real tnow, bool clear_file=false);
   void curve(real tnow, real value, const char *fname, bool clear_file);
   // 2D output:
-  void plot(int it);
+  void plot(int framenum, double tnow);
 
   void write_restart(const double tnow, const double dt);
   void read_restart(double & tnow, double & dt);

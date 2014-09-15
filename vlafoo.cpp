@@ -11,7 +11,7 @@ namespace po = boost::program_options;
 
 typedef std::vector< po::basic_option<char> > vec_opt; 
 
-
+// Show the variables_map used in boost program_options
 void show_vm(po::variables_map vm)
 {
   for(po::variables_map::iterator vit = vm.begin(); 
@@ -29,7 +29,6 @@ void show_vm(po::variables_map vm)
     std::cout << std::endl;
   }
 }
-
 
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
@@ -97,8 +96,8 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
     return;
   }
   
-  std::cout << "Abort: no initial conditions found matching " 
-	    << ic << std::endl;
+  std::cout << "Abort: no initial conditions found matching " << ic 
+	    << std::endl;
   exit(1);
 }
 
@@ -336,22 +335,23 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     // erase contents of output files and add initial value
     curves(tnow,true); 
     curves(tnow);
-    plot(framenum++);
+    plot(framenum++,tnow);
   }
 
   real dt0=dt;
 
   // TODO: saving logic should deal more elegantly with multiple cases.
-  bool savenow1=false;
-  bool savenow2=false;
   real nextsave1=tnow+tsave1;
   real nextsave2=tnow+tsave2;
+
+  real nextsave=std::min(nextsave1,nextsave2);
+  bool savenow=false;
 
   bool error=false;
   
   double wall0 = get_wall_time();
-  double wallinterval=10.0; // update number of iterations every second
-  unsigned int checkinterval=10;
+  double wallinterval=10.0;// 10  // update number of iterations every second
+  unsigned int checkinterval=10; //10
   int wallouts=0;
   bool go=true;
 
@@ -365,11 +365,14 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   
   while(go) {
     it++;
+    
     /*
+    std::cout << "\nit" << it << std::endl; // FIXME: temp
     std::cout << "t=" << tnow << std::endl; // FIXME: temp
     std::cout << "dt=" << dt << std::endl; // FIXME: temp
-    std::cout << "nextsave2=" << nextsave2 << std::endl; // FIXME: temp
-    */
+    std::cout << "t+dt=" << tnow+dt << std::endl; // FIXME: temp
+    std::cout << "nextsave=" << nextsave << std::endl; // FIXME: temp
+    */ 
 
     // Do not overshoot tmax
     if(tnow >= tmax)
@@ -377,46 +380,37 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
 
     // Time-step and increase time
     tnow += dt; // must be done before time_step, which may change dt.
-
     time_step(dt);
     dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
 
     // Check for nans and infs.
     error=check_for_error();
-    if(error) break;
+    if(error) 
+      break;
 
-    // Output 2D quantities:
-    if(savenow2 && !error) {
-      plot(framenum++);
-      //std::cout << "\tsave2\tt=" << tnow << std::endl; // FIXME: temp
-      lastsave2=tnow;
-      nextsave2 = lastsave2 + tsave2;
+    // Save the fields if it's time to do so
+    if(savenow) {
+      if(tnow >= nextsave2) {
+	lastsave2=tnow;
+	nextsave2 += tsave2;
+	plot(framenum++,tnow);
+      }
+      if(tnow >= nextsave1) {
+	lastsave1=tnow;
+	nextsave1 += tsave1;
+	curves(tnow);
+      }
+      nextsave=std::min(nextsave1,nextsave2);
       dt=dt0; // restore time-step
-      savenow2=false;
+      savenow=false;
     }
-
-    // Output scalar quantities:
-    if(savenow1 && !error) {
-      curves(tnow);
-      lastsave1=tnow;
-      nextsave1 = lastsave1 + tsave1;
-      dt = dt0; // restore time-step
-      savenow1 = false;
-    }
-
-    if(tnow + dt > nextsave1) {
+        
+    // Adjust time-step to reach next save-point:
+    if(tnow + dt >= nextsave) {
       dt0 = dt;
-      // Shorten dt so that we save at the right time
-      dt = nextsave1 - tnow; 
-      savenow1 = true;
-    }
-
-    if(tnow + dt >= nextsave2) {
-      if(! savenow1) dt0=dt;
-      // Shorten dt so that we save at the right time
+      dt = nextsave - tnow; 
       //std::cout << "\t" << dt << std::endl;
-      dt = nextsave2 - tnow; 
-      savenow2 = true;
+      savenow=true;
     }
 
     // iteration limits:
@@ -480,7 +474,7 @@ void VlaFoo::curves(real tnow, bool clear_file)
   curve(tnow,fmax(),"ftot",clear_file);
 }
 
-void VlaFoo::plot(int framenum)
+void VlaFoo::plot(int framenum, real tnow)
 {
   // output the 2D field at a given time.  
 
@@ -493,6 +487,7 @@ void VlaFoo::plot(int framenum)
 
   xdr::oxstream plot_file;
   plot_file.open(outname.c_str());
+  plot_file << tnow;
   plot_file << nx << nv;
   for(int i=0; i < nx; i++)
     for(int j=0; j < nv; j++)
@@ -878,8 +873,6 @@ int main(int argc, char* argv[])
   std::cout << "Setting up initial conditions..." << std::endl;
   double tnow=0.0;
   vla.initial_conditions(ic,tnow,dt);
-
-  std::cout << tnow << std::endl;
 
   std::cout << "Solving..." << std::endl;
   vla.solve(tnow,itmax,tmax,tsave1,tsave2);

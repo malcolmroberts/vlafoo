@@ -12,7 +12,7 @@ LDFLAGS+=-lboost_program_options
 CXXFLAGS=
 CXXFLAGS+=-Ofast
 CXXFLAGS+=-DNDEBUG 
-CXXFLAGS+=-ftree-vectorize 
+#CXXFLAGS+=-ftree-vectorize 
 #CXXFLAGS+=-ftree-vectorizer-verbose=1
 CXXFLAGS+=-march=native -mtune=native
 #CXXFLAGS+=-mavx

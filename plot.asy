@@ -1,4 +1,4 @@
-size(10cm,10cm);
+size(10cm,10cm,IgnoreAspect);
 
 import graph;
 import palette;
@@ -9,8 +9,12 @@ string filename=getstring("filename");
 //file fin=input(filename).line();
 file fin=input(run+"/"+filename,mode="xdr");
 
+real t=fin;
+
 real[][] f;
 f=fin.read(2);
+
+write("time="+string(t));
 
 int nx=10;
 int nv=10;
@@ -72,4 +76,4 @@ palette(bar,barlegend,range,(0,0),(0.5cm,paletteheight),Right,Palette,
         PaletteTicks(ptick=linewidth(0.5*linewidth())));
 add(bar.fit(),point(E),30E);
 
-draw(Label(texify(filename)),point(S),10S);
+draw(Label("\texttt{"+filename+"}, $t="+string(t)+"$"),point(S),10S);
