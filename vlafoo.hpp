@@ -37,11 +37,16 @@ private:
   array1<real> vtemp; // 1D array for Fourier transformed v per each x.
 
   int nx, nv;
+
   real cfl, dt;
   real eps, kx; // Landau damping parameters 
   real L, vmax;
   std::string outdir;
   std::string restart_filename;
+  bool restart;
+
+  int framenum;
+  real lastsave1, lastsave2;
   
   real index2v(int j) {return j*dv - vmax;}
   bool check_for_error();

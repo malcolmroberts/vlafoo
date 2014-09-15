@@ -36,11 +36,16 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
   real overs2pi=1.0/sqrt(2.0*PI);
 
   f.Load(0.0);
-  
+  framenum=0;
+  lastsave1=0.0;
+  lastsave2=0.0;
+  restart=false;
+
   // for(int ix=0;ix<nx;ix++) f[ix][1]=1.0;
 
   if(ic == "restart") {
     read_restart(tnow,dt);
+    restart=true;
     return;
   }
 
@@ -325,57 +330,54 @@ void VlaFoo::time_step(real &dt)
 
 void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
 {
-  int it=0.0;
-  int framenum=0.0;
+  int it=0;
 
-  //if(itmax < 0) itmax=INT_MAX;
+  if(!restart) {
+    // erase contents of output files and add initial value
+    curves(tnow,true); 
+    curves(tnow);
+    plot(framenum++);
+  }
 
-  curves(tnow,true);   // erase contents of output files.
-  curves(tnow);
-  plot(framenum++);
   real dt0=dt;
 
-  // FIXME: saving logic should deal more elegantly with multiple cases.
+  // TODO: saving logic should deal more elegantly with multiple cases.
   bool savenow1=false;
   bool savenow2=false;
   real nextsave1=tnow+tsave1;
   real nextsave2=tnow+tsave2;
+
+  bool error=false;
+  
+  double wall0 = get_wall_time();
+  double wallinterval=10.0; // update number of iterations every second
+  unsigned int checkinterval=10;
+  int wallouts=0;
+  bool go=true;
+
+  double tsave=std::min(tsave1,tsave2);
+  dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
 
   std::cout << "t=" << tnow << std::endl;
   std::cout << "tmax=" << tmax << std::endl;
   std::cout << "dt=" << dt << std::endl;
   std::cout << "time-stepping...\n" << std::endl;
   
-  bool error=false;
-  
-  double wall0 = get_wall_time();
-  double wallinterval=10.0; // update number of iterations every second
-  int wallouts=0;
-  bool go=true;
-
-  int nout1=1;
-  int nout2=1;
-
-  double tsave=std::min(tsave1,tsave2);
-  dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
-
-
-
   while(go) {
     it++;
-    //std::cout << "t=" << tnow << std::endl; // FIXME: temp
-    //std::cout << "dt=" << dt << std::endl; // FIXME: temp
-    // Output 2D quantities:
-    if(savenow2 && !error) {
-      nout2++;
-      plot(framenum++);
-      nextsave2 = nout2 * tsave2;
-      dt=dt0; // restore time-step
-      savenow2=false;
-    }
+    /*
+    std::cout << "t=" << tnow << std::endl; // FIXME: temp
+    std::cout << "dt=" << dt << std::endl; // FIXME: temp
+    std::cout << "nextsave2=" << nextsave2 << std::endl; // FIXME: temp
+    */
+
+    // Do not overshoot tmax
+    if(tnow >= tmax)
+      dt=tmax-tnow;
 
     // Time-step and increase time
     tnow += dt; // must be done before time_step, which may change dt.
+
     time_step(dt);
     dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
 
@@ -383,11 +385,21 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     error=check_for_error();
     if(error) break;
 
+    // Output 2D quantities:
+    if(savenow2 && !error) {
+      plot(framenum++);
+      //std::cout << "\tsave2\tt=" << tnow << std::endl; // FIXME: temp
+      lastsave2=tnow;
+      nextsave2 = lastsave2 + tsave2;
+      dt=dt0; // restore time-step
+      savenow2=false;
+    }
+
     // Output scalar quantities:
     if(savenow1 && !error) {
-      nout1++;
       curves(tnow);
-      nextsave1 = nout1 * tsave1;   // FIXME: does not account for restarts!
+      lastsave1=tnow;
+      nextsave1 = lastsave1 + tsave1;
       dt = dt0; // restore time-step
       savenow1 = false;
     }
@@ -402,12 +414,14 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     if(tnow + dt >= nextsave2) {
       if(! savenow1) dt0=dt;
       // Shorten dt so that we save at the right time
+      //std::cout << "\t" << dt << std::endl;
       dt = nextsave2 - tnow; 
       savenow2 = true;
     }
 
     // iteration limits:
     if(tnow >= tmax) {
+      dt=tmax-tnow;
       go = false;
       std::cout << "reached tmax=" << tmax << std::endl;
     }
@@ -421,7 +435,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
       wall0=get_wall_time();
       wallouts++;
       std::cout << it << std::flush;
-      if(wallouts % 10 == 0) {
+      if(wallouts % checkinterval == 0) {
 	write_restart(tnow,dt);
 	std::cout << "\tt=" << tnow << "\tdt=" << dt << std::endl;
       } else {
@@ -492,9 +506,8 @@ void VlaFoo::write_restart(const double tnow, const double dt)
   xdr::oxstream xout;
   std::string path_file=outdir+"/"+restart_filename;
   xout.open(path_file.c_str());
- 
-
-  xout << tnow << dt;
+  
+  xout << tnow << dt << framenum << lastsave1 << lastsave2;
   for(int i=0; i < nx; i++)
     for(int j=0; j < nv; j++)
       xout << f[i][j];
@@ -503,26 +516,31 @@ void VlaFoo::write_restart(const double tnow, const double dt)
 
 void VlaFoo::read_restart(double &tnow, double & dt)
 {
-  // Write to the restart file
   xdr::ixstream xin;
   std::string path_file=outdir+"/"+restart_filename;
   xin.open(path_file.c_str());
   if(xin) {  
     xin >> tnow;
     xin >> dt;
+    xin >> framenum;
+    xin >> lastsave1;
+    xin >> lastsave2;
     for(int i=0; i < nx; i++)
       for(int j=0; j < nv; j++)
 	xin >> f[i][j];
     xin.close();
   } else {
-    std::cout << "restart file " 
-	      << path_file 
-	      << " does not exist" 
+    std::cout << "restart file "
+	      << path_file
+	      << " does not exist"
 	      << std::endl;
     exit(1);
   }
   std::cout << "t=" << tnow << std::endl; // FIXME: temp
   std::cout << "dt=" << dt << std::endl; // FIXME: temp
+  std::cout << "framenum=" << framenum << std::endl; // FIXME: temp
+  std::cout << "lastsave1=" << lastsave1 << std::endl; // FIXME: temp
+  std::cout << "lastsave2=" << lastsave2 << std::endl; // FIXME: temp
 }
 
 real VlaFoo::compute_kin_energy()
@@ -696,7 +714,13 @@ int main(int argc, char* argv[])
     po::parsed_options cl_opts = po::parse_command_line(argc,argv,
 							cmdline_options);
     po::store(cl_opts,vm);
-    //po::notify(vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+      //std::cout << generic << std::endl;
+      std::cout << cmdline_options << std::endl;
+      return 0;
+    }
     
     // Read the config file
     std::ifstream ifs(config_file.c_str());
@@ -840,13 +864,10 @@ int main(int argc, char* argv[])
       outfile.close();
     }
      
-    if (vm.count("help")) {
-      std::cout << generic << std::endl;
-      return 0;
-    }
     
     // Show all of the parameters in the variable map:
-    //show_vm(vm);
+    std::cout << "Parameters used in this simulation:" << std::endl;
+    show_vm(vm);
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);
