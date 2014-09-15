@@ -608,6 +608,15 @@ bool VlaFoo::check_for_error()
 
 int main(int argc, char* argv[])
 {
+  std::cout << "Welcome to VlaFoo.\n"
+	    <<"This is VlaFoo, Welcome to VlaFoo.\n" 
+	    << "\tAnything is possible at VlaFoo...\n" 
+	    <<"\t...the only limit is yourself.\n" 
+	    <<"\tWelcom to VlaFoo." 
+	    << std::endl;
+  std::cout << "git branch: " << GITBRANCH
+	    << "\tgit commit version: " << GITHASH 
+	    << std::endl;
   std::cout << "command:" << std::endl;
   for(int i=0; i < argc; ++i) { 
     std::cout << argv[i];
@@ -707,10 +716,8 @@ int main(int argc, char* argv[])
  
 
     // Add the any missing entries to the config file.
-    //if(false) // FIXME: temp
     {
-      std::cout << "Add missing values to the config file"
-		<< std::endl;
+      //std::cout << "Add missing values to the config file" << std::endl;
       std::ifstream input(config_file.c_str());
       std::vector<std::string> lines;
       { // read each line and add to lines:
@@ -727,7 +734,7 @@ int main(int argc, char* argv[])
 	  vit != vm.end(); 
 	  ++vit) {
 	std::string v_name = vit->first;
-	std::cout << v_name  << std::endl;
+	//std::cout << v_name  << std::endl;
 	
 	if(v_name != "config") {
 	  // TODO: instead of just checking config, check against
@@ -742,7 +749,7 @@ int main(int argc, char* argv[])
 	  if(!var_in_file) {
 	    // The variable is not in the config file, so add it.
 
-	    std::cout << "val missing in config; adding" << std::endl;
+	    //std::cout << "val missing in config; adding" << std::endl;
 
 	    // NB: we do a lot of casting and catching exceptions so
 	    // that we can cout boost::any.
@@ -763,11 +770,10 @@ int main(int argc, char* argv[])
       outfile.close();
     }
 
-
     // Update the config file with the values from the command line.
     {
-      std::cout << "update config file with values from command-line" 
-		<< std::endl;
+      //std::cout << "update config file with values from command-line" 
+      //	<< std::endl;
 
       // Read the config file and store it, line-by-line, in lines.
       std::ifstream input(config_file.c_str());
@@ -779,32 +785,34 @@ int main(int argc, char* argv[])
       }
       input.close();
 
+      /*
       std::cout << "Lines from config file:" << std::endl;
-      for(unsigned int i=0; i < lines.size(); ++i) {
+      for(unsigned int i=0; i < lines.size(); ++i)
 	std::cout << lines[i] << std::endl;
-      }
       std::cout << std::endl;
+      */
 
       // Re-write the config file, line-by-line, replacing old
       // values with new values from the command-line.
       std::ofstream outfile;
-      outfile.open(config_file.c_str(),
-		   std::ofstream::out | std::ofstream::trunc);
-	
+      outfile.open(config_file.c_str());
+      
       for(unsigned int i=0; i < lines.size(); ++i) {
 	// Search for updates from command-line:
+	int found=-1;
 	for(vec_opt::iterator ipo = cl_opts.options.begin();
 	    ipo != cl_opts.options.end(); 
 	    ++ipo) {
 	  po::basic_option<char>& l_option = *ipo;
 
+
 	  // TODO improve the check if var name is allowed
 	  if(l_option.string_key != "config") {
 
-	    std::size_t found = lines[i].find(l_option.string_key);
+	    found = lines[i].find(l_option.string_key);
 	    if(found == 0) {
-	      std::cout <<  l_option.string_key << std::endl;
-	      std::cout << "\tadding to config file" << std::endl;
+	      //std::cout <<  l_option.string_key << std::endl;
+	      //std::cout << "\tadding to config file" << std::endl;
 	      // Replace the line with the new value
 	      outfile << l_option.string_key 
 		      << "="
@@ -817,13 +825,17 @@ int main(int argc, char* argv[])
 		std::cout << "\tfound " << l_option.string_key << std::endl;
 		std::cout << config_file << ":\t" << lines[i] << std::endl;
 	      */
-	    } else {
-	      // Keep the original line
-	      //std::cout << lines[i] << std::endl;
-	      outfile << lines[i] << std::endl;
 	    }
 	  }
 	}
+	
+	if(found == -1) {
+	  // Keep the original line
+	  //std::cout << "keep old line:" << std::endl;
+	  //std::cout << lines[i] << std::endl;
+	  outfile << lines[i] << std::endl;
+	}
+	
       }
       outfile.close();
     }
@@ -832,7 +844,9 @@ int main(int argc, char* argv[])
       std::cout << generic << std::endl;
       return 0;
     }
-    show_vm(vm);
+    
+    // Show all of the parameters in the variable map:
+    //show_vm(vm);
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);

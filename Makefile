@@ -18,7 +18,6 @@ CXXFLAGS+=-march=native -mtune=native
 #CXXFLAGS+=-mavx
 CXXFLAGS+=-g -Wall -ansi -fomit-frame-pointer -fstrict-aliasing -ffast-math -mavx -mfpmath=sse
 
-
 CXXFLAGS+=-I$(FFTWPP_INCLUDE_PATH)
 
 ifneq ($(strip $(FFTW_INCLUDE_PATH)),)
@@ -31,13 +30,18 @@ else
 CXXFLAGS+=-I$(BOOST_ROOT)
 endif
 
+# Get git branch info, define and pass to preprocessor
+GITHASH=\"$(shell git rev-parse --short HEAD)\"
+CXXFLAGS+=-DGITHASH=${GITHASH}
+GITBRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
+CXXFLAGS+=-DGITBRANCH=${GITBRANCH}
 
 # Stick to one thread for now:
 CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
 
 VPATH=.:$(FFTWPP_INCLUDE_PATH)
 
-all: vlafoo
+all: vlafoo 
 
 vlafoo: timestepper.o vlafoo.o fftw++.o
 	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
@@ -52,9 +56,6 @@ timestepper.o : timestepper.cpp timestepper.hpp
 
 vlafoo.o : vlafoo.cpp vlafoo.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
-
-
-
 
 make clean:
 	rm -f vlafoo *.o
