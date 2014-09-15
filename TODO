@@ -1,2 +1,7 @@
-Don't step past final time.
+When restarting a file, re-read the *vt files and remove doubled
+entries.
+
+Add RK4/5 method.
+
+Add DG method.
 
