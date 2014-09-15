@@ -818,37 +818,43 @@ int main(int argc, char* argv[])
       
       for(unsigned int i=0; i < lines.size(); ++i) {
 	// Search for updates from command-line:
-	int found=-1;
+	bool isfound=false;
 	for(vec_opt::iterator ipo = cl_opts.options.begin();
 	    ipo != cl_opts.options.end(); 
 	    ++ipo) {
 	  po::basic_option<char>& l_option = *ipo;
 
+	  //std::cout << l_option.string_key << std::endl;
 
 	  // TODO improve the check if var name is allowed
 	  if(l_option.string_key != "config") {
+	    if(!isfound) {
 
-	    found = lines[i].find(l_option.string_key);
-	    if(found == 0) {
-	      //std::cout <<  l_option.string_key << std::endl;
-	      //std::cout << "\tadding to config file" << std::endl;
-	      // Replace the line with the new value
-	      outfile << l_option.string_key 
-		      << "="
-		      << l_option.value[0] << std::endl;
-	      /*
-		std::cout << "command line:\t"
-		<< l_option.string_key 
-		<< "=" 
-		<< l_option.value[0] << std::endl;
-		std::cout << "\tfound " << l_option.string_key << std::endl;
-		std::cout << config_file << ":\t" << lines[i] << std::endl;
-	      */
+	      int found = lines[i].find(l_option.string_key);
+	      isfound=(found == 0);
+
+	      if(isfound) {
+		//std::cout <<  l_option.string_key << std::endl;
+		//std::cout << "\tadding to config file" << std::endl;
+		// Replace the line with the new value
+		outfile << l_option.string_key 
+			<< "="
+			<< l_option.value[0] << std::endl;
+		/*
+		  std::cout << "command line:\t"
+		  << l_option.string_key 
+		  << "=" 
+		  << l_option.value[0] << std::endl;
+		  std::cout << "\tfound " << l_option.string_key << std::endl;
+		  std::cout << config_file << ":\t" << lines[i] << std::endl;
+		*/
+		//ipo=cl_opts.options.end(); // stop looping.
+	      }
 	    }
 	  }
 	}
 	
-	if(found == -1) {
+	if(!isfound) {
 	  // Keep the original line
 	  //std::cout << "keep old line:" << std::endl;
 	  //std::cout << lines[i] << std::endl;

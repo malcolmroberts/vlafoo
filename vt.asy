@@ -62,6 +62,9 @@ while(flag) {
     a=transpose(a);
     real[] t=a[0];
     real[] Ek=a[1];
+
+    write("max time="+string(max(t)));
+
     string legend= myleg ? legends[n] : texify(filename);
     draw(graph(t,Ek,t<=tmax),Pen(n),legend);
     if(docrop) ylimits(7e-2,1e-1,Crop);
