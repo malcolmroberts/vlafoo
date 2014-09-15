@@ -5,6 +5,9 @@ asymptote should read paramters in from config file.
 
 Output stats of number of iterations and dt (etc) every second or so.
 
+Make dynamic time-steppers able to recover from nans/infs (by
+repeating a time-step).
+
 Add RK4/5 method.
 
 Add DG method.
