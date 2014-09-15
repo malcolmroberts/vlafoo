@@ -1,6 +1,8 @@
 When restarting a file, re-read the *vt files and remove doubled
 entries.
 
+asymptote should read paramters in from config file.
+
 Output stats of number of iterations and dt (etc) every second or so.
 
 Add RK4/5 method.
