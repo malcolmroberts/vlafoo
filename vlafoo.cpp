@@ -446,9 +446,9 @@ void VlaFoo::curves(real tnow, bool clear_file)
 {
   curve(tnow,compute_kin_energy(),"ekvt",clear_file);
   curve(tnow,compute_elec_energy(),"eEvt",clear_file);
-  curve(tnow,fmin(),"fmin",clear_file);
-  curve(tnow,fmax(),"fmax",clear_file);
-  curve(tnow,fmax(),"ftot",clear_file);
+  curve(tnow,fmin(),"fminvt",clear_file);
+  curve(tnow,fmax(),"fmaxvt",clear_file);
+  curve(tnow,fmax(),"ftotvt",clear_file);
 }
 
 void VlaFoo::plot(int framenum, real tnow)

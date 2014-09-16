@@ -71,9 +71,7 @@ public:
     for(int i=0; i < rk_stages; i++)
       S[i] = new T[rk_n] ;
     rk_allocated=true;
-
   }
-
 
   ~timestepper()
   {
@@ -114,14 +112,12 @@ public:
   {
     T* s;
 
-    // FIXME: restore
-    /*
     s = S[0];
     rk_source(f,s);
     double halfdt = 0.5 * dt;
     for(unsigned int i = 0; i < rk_n; i++)
       f[i] += halfdt * s[i];
-    */
+
     s = S[1];
     rk_source(f,s);
     for(unsigned int i = 0; i < rk_n; i++)
