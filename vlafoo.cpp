@@ -2,30 +2,9 @@
 #include "xstream.h"
 #include <fstream>
 #include "clopts.hpp"
-#include <iterator>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-typedef std::vector< po::basic_option<char> > vec_opt; 
-
-// Show the variables_map used in boost program_options
-void show_vm(po::variables_map vm)
-{
-  for(po::variables_map::iterator vit = vm.begin(); 
-      vit != vm.end(); 
-      ++vit) {
-    std::cout << vit->first << "=";
-    try { std::cout << vit->second.as<double>();
-    } catch(...) {/* do nothing */ }
-    try { std::cout << vit->second.as<int>();
-    } catch(...) {/* do nothing */ }
-    try { std::cout << vit->second.as<std::string>();
-    } catch(...) {/* do nothing */ }
-    try { std::cout  << vit->second.as<bool>();
-    } catch(...) {/* do nothing */ }
-    std::cout << std::endl;
-  }
-}
 
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
@@ -660,10 +639,9 @@ int main(int argc, char* argv[])
   po::options_description cmdline_options;
   po::options_description config_file_options;
   po::variables_map vm;
+
   // Set up and read the command line and config file.
   {
-    // try {
-
     generic.add_options()
       ("help,h", "produce help message")
       ("config,c",
@@ -715,6 +693,7 @@ int main(int argc, char* argv[])
 
   }
   */
+
   {
     // Read the command-line options and store in the parsed version
     // in opts.
@@ -729,103 +708,30 @@ int main(int argc, char* argv[])
     }
 
     // Read the config file
-    std::ifstream ifs(config_file.c_str());
-    if (!ifs) {
-      std::string config_dir="test"; 
-      
-      std::cout << "Creating empty config file " 
-		<< config_file 
-		<< std::endl;
-		      
-      make_empty_file(config_dir,config_file);
-
-      ifs.open(config_file.c_str()); 
-    }
-      
-    po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
-    store(f_opts, vm);
-    notify(vm);
-    ifs.close();
- 
-    // Add the any missing entries to the config file.
-    update_config_file(config_file,vm);
-
-    // Update the config file with the values from the command line.
     {
-      //std::cout << "update config file with values from command-line" 
-      //	<< std::endl;
-
-      // Read the config file and store it, line-by-line, in lines.
-      std::ifstream input(config_file.c_str());
-      std::vector<std::string> lines;
-      { // read each line and add to lines:
-	std::string line;
-	while(getline(input,line))
-	  lines.push_back(line);
+      std::ifstream ifs(config_file.c_str());
+      if (!ifs) {
+	std::string config_dir="test"; 
+	
+	std::cout << "Creating empty config file " 
+		  << config_file 
+		  << std::endl;
+	
+	make_empty_file(config_dir,config_file);
+	
+	ifs.open(config_file.c_str()); 
       }
-      input.close();
-
-      /*
-      std::cout << "Lines from config file:" << std::endl;
-      for(unsigned int i=0; i < lines.size(); ++i)
-	std::cout << lines[i] << std::endl;
-      std::cout << std::endl;
-      */
-
-      // Re-write the config file, line-by-line, replacing old
-      // values with new values from the command-line.
-      std::ofstream outfile;
-      outfile.open(config_file.c_str());
       
-      for(unsigned int i=0; i < lines.size(); ++i) {
-	// Search for updates from command-line:
-	bool isfound=false;
-	for(vec_opt::iterator ipo = cl_opts.options.begin();
-	    ipo != cl_opts.options.end(); 
-	    ++ipo) {
-	  po::basic_option<char>& l_option = *ipo;
+      po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
+      store(f_opts, vm);
+      notify(vm);
+      ifs.close();
+    } 
 
-	  //std::cout << l_option.string_key << std::endl;
+    // Add the any missing entries to the config file.
+    fill_config_file(config_file, vm);
 
-	  // TODO improve the check if var name is allowed
-	  if(l_option.string_key != "config") {
-	    if(!isfound) {
-
-	      int found = lines[i].find(l_option.string_key);
-	      isfound=(found == 0);
-
-	      if(isfound) {
-		//std::cout <<  l_option.string_key << std::endl;
-		//std::cout << "\tadding to config file" << std::endl;
-		// Replace the line with the new value
-		outfile << l_option.string_key 
-			<< "="
-			<< l_option.value[0] << std::endl;
-		/*
-		  std::cout << "command line:\t"
-		  << l_option.string_key 
-		  << "=" 
-		  << l_option.value[0] << std::endl;
-		  std::cout << "\tfound " << l_option.string_key << std::endl;
-		  std::cout << config_file << ":\t" << lines[i] << std::endl;
-		*/
-		//ipo=cl_opts.options.end(); // stop looping.
-	      }
-	    }
-	  }
-	}
-	
-	if(!isfound) {
-	  // Keep the original line
-	  //std::cout << "keep old line:" << std::endl;
-	  //std::cout << lines[i] << std::endl;
-	  outfile << lines[i] << std::endl;
-	}
-	
-      }
-      outfile.close();
-    }
-     
+    update_config_file(config_file, cl_opts, vm);
     
     // Show all of the parameters in the variable map:
     std::cout << "Parameters used in this simulation:" << std::endl;
