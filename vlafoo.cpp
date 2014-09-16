@@ -627,11 +627,11 @@ int main(int argc, char* argv[])
   real eps;
   real vmax;
   std::string ic;
-  std::string outdir;
+  std::string outdir, config_file;
   std::string rk_name="euler";
   bool dynamic;
   double tolmin, tolmax;
-  std::string config_file;
+  std::string config_dir_file;
 
   // option maps
   po::options_description generic("Allowed options");
@@ -645,8 +645,10 @@ int main(int argc, char* argv[])
     generic.add_options()
       ("help,h", "produce help message")
       ("config,c",
-       po::value<std::string>(&config_file)->default_value("test/vlafoo.cfg"),
+       po::value<std::string>(&config_file)->default_value("vlafoo.cfg"),
        "name of a file of a configuration.")
+      ("outdir", po::value<std::string>(&outdir)->default_value("test"),
+       "outdir")
       ;
     
     // Declare a group of options that will be allowed both on command
@@ -664,42 +666,36 @@ int main(int argc, char* argv[])
       ("eps", po::value<double>(&eps)->default_value(5e-3),"eps")
       ("kx", po::value<double>(&kx)->default_value(0.2),"kx")
       ("ic", po::value<std::string>(&ic)->default_value("landau"),"ic")
-      ("outdir", po::value<std::string>(&outdir)->default_value("test"),
-       "outdir")
       ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
        "rk_name: euler or rk2")
       ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
       ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
       ;
-    
+
     // Options for the command line:
     cmdline_options.add(generic).add(config);
     
     // Options for the config file:
     config_file_options.add(config);
-    
   }
-  // positional arguments (rundir):
-  /*
-  {
-    po::positional_options_description p;
-    p.add("input-file", -1);
-
-    po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).
-	      options(desc).positional(p).run(), vm);
-    po::notify(vm);
-
-  }
-  */
 
   {
     // Read the command-line options and store in the parsed version
     // in opts.
+
+    // Keep a copy for to update the config file:
     po::parsed_options cl_opts = po::parse_command_line(argc,argv,
 							cmdline_options);
-    po::store(cl_opts,vm);
+
+    // positional arguments (outdir):
+    po::positional_options_description p;
+    p.add("outdir", -1);
+
+    store(po::command_line_parser(argc, argv).
+	  options(cmdline_options).positional(p).run(), vm);
+    
+    //store(cl_opts,vm);
     po::notify(vm);
 
     if (vm.count("help")) {
@@ -707,19 +703,21 @@ int main(int argc, char* argv[])
       return 0;
     }
 
+    std::cout << "Finished with command-line arguments." << std::endl;
+
+    config_dir_file=outdir+"/"+config_file;
+
     // Read the config file
     {
-      std::ifstream ifs(config_file.c_str());
+      std::ifstream ifs(config_dir_file.c_str());
       if (!ifs) {
-	std::string config_dir="test"; 
-	
 	std::cout << "Creating empty config file " 
-		  << config_file 
+		  << config_dir_file 
 		  << std::endl;
 	
-	make_empty_file(config_dir,config_file);
+	make_empty_file(outdir,config_file);
 	
-	ifs.open(config_file.c_str()); 
+	ifs.open(config_dir_file.c_str()); 
       }
       
       po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
@@ -728,10 +726,10 @@ int main(int argc, char* argv[])
       ifs.close();
     } 
 
-    // Add the any missing entries to the config file.
-    fill_config_file(config_file, vm);
-
-    update_config_file(config_file, cl_opts, vm);
+    // Add the any missing entries to the config file and then update
+    // with command-line arguments.
+    fill_config_file(config_dir_file, vm);
+    update_config_file(config_dir_file, cl_opts, vm);
     
     // Show all of the parameters in the variable map:
     std::cout << "Parameters used in this simulation:" << std::endl;

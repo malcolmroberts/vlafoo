@@ -22,16 +22,16 @@ void show_vm(po::variables_map vm)
 void make_empty_file(std::string dir,std::string file)
 {
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  std::ofstream outfile (file.c_str());
+  std::string dir_file=dir+"/"+file;
+  std::ofstream outfile(dir_file.c_str());
   outfile.close();
-  
 }
 
-void fill_config_file(std::string config_file, po::variables_map &vm) 
+void fill_config_file(std::string config_dir_file, po::variables_map &vm) 
 { 
   //std::cout << "Add missing values to the config file" << std::endl;  
 
-  std::ifstream input(config_file.c_str());
+  std::ifstream input(config_dir_file.c_str());
   std::vector<std::string> lines;
   { // read each line and add to lines:
     std::string line;
@@ -41,8 +41,8 @@ void fill_config_file(std::string config_file, po::variables_map &vm)
   input.close();
 
   std::ofstream outfile;
-  //std::cout << config_file << std::endl;
-  outfile.open(config_file.c_str(), std::ios_base::app);
+  //std::cout << config_dir_file << std::endl;
+  outfile.open(config_dir_file.c_str(), std::ios_base::app);
 
   for(po::variables_map::iterator vit = vm.begin(); 
       vit != vm.end(); 
@@ -50,7 +50,7 @@ void fill_config_file(std::string config_file, po::variables_map &vm)
     std::string v_name = vit->first;
     //std::cout << v_name  << std::endl;
 	
-    if(v_name != "config") {
+    if(v_name != "config" &&  v_name != "outdir") {
       // TODO: instead of just checking config, check against
       // disallowed config-file variables.
 
@@ -84,7 +84,7 @@ void fill_config_file(std::string config_file, po::variables_map &vm)
   outfile.close();
 }
 
-void update_config_file(std::string config_file, po::parsed_options &cl_opts,
+void update_config_file(std::string config_dir_file, po::parsed_options &cl_opts,
 			po::variables_map &vm)
 {
   // Update the config file with the values from the command line.
@@ -93,7 +93,7 @@ void update_config_file(std::string config_file, po::parsed_options &cl_opts,
     //	<< std::endl;
 
     // Read the config file and store it, line-by-line, in lines.
-    std::ifstream input(config_file.c_str());
+    std::ifstream input(config_dir_file.c_str());
     std::vector<std::string> lines;
     { // read each line and add to lines:
       std::string line;
@@ -112,7 +112,7 @@ void update_config_file(std::string config_file, po::parsed_options &cl_opts,
     // Re-write the config file, line-by-line, replacing old
     // values with new values from the command-line.
     std::ofstream outfile;
-    outfile.open(config_file.c_str());
+    outfile.open(config_dir_file.c_str());
       
     for(unsigned int i=0; i < lines.size(); ++i) {
       // Search for updates from command-line:
@@ -144,7 +144,7 @@ void update_config_file(std::string config_file, po::parsed_options &cl_opts,
 		<< "=" 
 		<< l_option.value[0] << std::endl;
 		std::cout << "\tfound " << l_option.string_key << std::endl;
-		std::cout << config_file << ":\t" << lines[i] << std::endl;
+		std::cout << config_dir_file << ":\t" << lines[i] << std::endl;
 	      */
 	      //ipo=cl_opts.options.end(); // stop looping.
 	    }
