@@ -7,20 +7,21 @@ namespace po = boost::program_options;
 
 
 // Compute initial condition
-void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt) {
+void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
+				bool restart) {
   real overs2pi=1.0/sqrt(2.0*PI);
 
   f.Load(0.0);
   framenum=0;
   lastsave1=0.0;
   lastsave2=0.0;
-  restart=false;
+  did_restart=false;
 
   // for(int ix=0;ix<nx;ix++) f[ix][1]=1.0;
 
-  if(ic == "restart") {
+  if(restart) {
     read_restart(tnow,dt);
-    restart=true;
+    did_restart=true;
     return;
   }
 
@@ -307,7 +308,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
 {
   int it=0;
 
-  if(!restart) {
+  if(!did_restart) {
     // erase contents of output files and add initial value
     curves(tnow,true); 
     curves(tnow);
@@ -630,6 +631,7 @@ int main(int argc, char* argv[])
   std::string outdir, config_file;
   std::string rk_name="euler";
   bool dynamic;
+  bool restart;
   double tolmin, tolmax;
   std::string config_dir_file;
 
@@ -657,7 +659,7 @@ int main(int argc, char* argv[])
       ("nx", po::value<int>(&nx)->default_value(10),"nx")
       ("nv", po::value<int>(&nv)->default_value(10),"nv")
       ("tmax", po::value<double>(&tmax)->default_value(10.0),"tmax")
-      ("vmax", po::value<double>(&vmax)->default_value(6.0),"vmax")
+      ("vmax", po::value<double>(&vmax)->default_value(10.0),"vmax")
       ("tsave1", po::value<double>(&tsave1)->default_value(0.1),"tsave1")
       ("tsave2", po::value<double>(&tsave2)->default_value(1.0),"tsave2")
       ("dt", po::value<double>(&dt)->default_value(0.0),"dt")
@@ -671,11 +673,11 @@ int main(int argc, char* argv[])
       ("dynamic", po::value<bool>(&dynamic)->default_value(true),"dynamic")
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
       ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
+      ("restart", po::value<bool>(&restart)->default_value(false),"restart")
       ;
 
     // Options for the command line:
     cmdline_options.add(generic).add(config);
-    
     // Options for the config file:
     config_file_options.add(config);
   }
@@ -691,11 +693,8 @@ int main(int argc, char* argv[])
     // positional arguments (outdir):
     po::positional_options_description p;
     p.add("outdir", -1);
-
     store(po::command_line_parser(argc, argv).
 	  options(cmdline_options).positional(p).run(), vm);
-    
-    //store(cl_opts,vm);
     po::notify(vm);
 
     if (vm.count("help")) {
@@ -705,10 +704,9 @@ int main(int argc, char* argv[])
 
     std::cout << "Finished with command-line arguments." << std::endl;
 
-    config_dir_file=outdir+"/"+config_file;
-
     // Read the config file
     {
+      config_dir_file=outdir+"/"+config_file;
       std::ifstream ifs(config_dir_file.c_str());
       if (!ifs) {
 	std::cout << "Creating empty config file " 
@@ -743,7 +741,7 @@ int main(int argc, char* argv[])
     
   std::cout << "Setting up initial conditions..." << std::endl;
   double tnow=0.0;
-  vla.initial_conditions(ic,tnow,dt);
+  vla.initial_conditions(ic,tnow,dt,restart);
 
   std::cout << "Solving..." << std::endl;
   vla.solve(tnow,itmax,tmax,tsave1,tsave2);

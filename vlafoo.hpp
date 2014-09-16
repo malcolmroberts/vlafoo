@@ -43,7 +43,7 @@ private:
   real L, vmax;
   std::string outdir;
   std::string restart_filename;
-  bool restart;
+  bool did_restart;
 
   int framenum;
   real lastsave1, lastsave2;
@@ -167,7 +167,8 @@ public:
   void set_dt(real new_dt) {dt = new_dt;}
 
  // Set initial conditions
-  void initial_conditions(std::string &ic, double &tnow, double &dt);
+  void initial_conditions(std::string &ic, double &tnow, double &dt, 
+			  bool restart);
 
   void rk_source(real *f, real *S);
 
