@@ -50,7 +50,8 @@ void fill_config_file(std::string config_dir_file, po::variables_map &vm)
     std::string v_name = vit->first;
     //std::cout << v_name  << std::endl;
 	
-    if(v_name != "config" &&  v_name != "outdir") {
+    // the "" is to get rid of positional arguments.
+    if(v_name != "config" &&  v_name != "outdir" && v_name != "") {
       // TODO: instead of just checking config, check against
       // disallowed config-file variables.
 
@@ -63,7 +64,9 @@ void fill_config_file(std::string config_dir_file, po::variables_map &vm)
       if(!var_in_file) {
 	// The variable is not in the config file, so add it.
 
-	//std::cout << "val missing in config; adding" << std::endl;
+	// std::cout << "val missing in config; adding" << std::endl;
+	// std::cout << v_name << std::endl;
+	// std::cout << vit->first << std::endl << std::endl;
 
 	// NB: we do a lot of casting and catching exceptions so
 	// that we can cout boost::any.
@@ -125,7 +128,9 @@ void update_config_file(std::string config_dir_file, po::parsed_options &cl_opts
 	//std::cout << l_option.string_key << std::endl;
 
 	// TODO improve the check if var name is allowed
-	if(l_option.string_key != "config") {
+	if(l_option.string_key != "config" 
+	   && l_option.string_key != "outdir"
+	   && l_option.string_key != "") {
 	  if(!isfound) {
 
 	    int found = lines[i].find(l_option.string_key);
