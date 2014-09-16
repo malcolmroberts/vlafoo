@@ -43,7 +43,7 @@ VPATH=.:$(FFTWPP_INCLUDE_PATH)
 
 all: vlafoo 
 
-vlafoo: timestepper.o vlafoo.o fftw++.o
+vlafoo: clopts.o timestepper.o vlafoo.o fftw++.o
 	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 # The combination of .cc/.h and .cpp/.hpp means object compilation is
@@ -54,7 +54,10 @@ fftw++.o : fftw++.cc fftw++.h
 timestepper.o : timestepper.cpp timestepper.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
-vlafoo.o : vlafoo.cpp vlafoo.hpp
+clopts.o: clopts.cpp clopts.hpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
+
+vlafoo.o: vlafoo.cpp vlafoo.hpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< $(LDFLAGS)
 
 make clean:

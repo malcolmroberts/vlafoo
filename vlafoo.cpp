@@ -1,10 +1,7 @@
 #include "vlafoo.hpp"
-#include <getopt.h>
-#include <stdlib.h>     /* atoi */
-#include <iomanip>      /* setw */
 #include "xstream.h"
 #include <fstream>
-
+#include "clopts.hpp"
 #include <iterator>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -657,10 +654,16 @@ int main(int argc, char* argv[])
   double tolmin, tolmax;
   std::string config_file;
 
+  // option maps
+  po::options_description generic("Allowed options");
+  po::options_description config("Configuration");
+  po::options_description cmdline_options;
+  po::options_description config_file_options;
+  po::variables_map vm;
   // Set up and read the command line and config file.
   {
     // try {
-    po::options_description generic("Allowed options");
+
     generic.add_options()
       ("help,h", "produce help message")
       ("config,c",
@@ -670,7 +673,6 @@ int main(int argc, char* argv[])
     
     // Declare a group of options that will be allowed both on command
     // line and in config file
-    po::options_description config("Configuration");
     config.add_options()
       ("nx", po::value<int>(&nx)->default_value(10),"nx")
       ("nv", po::value<int>(&nv)->default_value(10),"nv")
@@ -694,16 +696,26 @@ int main(int argc, char* argv[])
       ;
     
     // Options for the command line:
-    po::options_description cmdline_options;
     cmdline_options.add(generic).add(config);
     
     // Options for the config file:
-    po::options_description config_file_options;
     config_file_options.add(config);
     
-    // The variables map
-    po::variables_map vm;
+  }
+  // positional arguments (rundir):
+  /*
+  {
+    po::positional_options_description p;
+    p.add("input-file", -1);
 
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).
+	      options(desc).positional(p).run(), vm);
+    po::notify(vm);
+
+  }
+  */
+  {
     // Read the command-line options and store in the parsed version
     // in opts.
     po::parsed_options cl_opts = po::parse_command_line(argc,argv,
@@ -712,20 +724,22 @@ int main(int argc, char* argv[])
     po::notify(vm);
 
     if (vm.count("help")) {
-      //std::cout << generic << std::endl;
       std::cout << cmdline_options << std::endl;
       return 0;
     }
-    
+
     // Read the config file
     std::ifstream ifs(config_file.c_str());
     if (!ifs) {
-      std::cout << "Creating empty config file" << std::endl;
-      std::ofstream outfile;
-      outfile.open(config_file.c_str(), 
-		   std::ofstream::out | std::ofstream::trunc);
-      outfile.close();
-      ifs.open(config_file.c_str()); // repoen the file
+      std::string config_dir="test"; 
+      
+      std::cout << "Creating empty config file " 
+		<< config_file 
+		<< std::endl;
+		      
+      make_empty_file(config_dir,config_file);
+
+      ifs.open(config_file.c_str()); 
     }
       
     po::parsed_options f_opts = parse_config_file(ifs, config_file_options);
@@ -733,61 +747,8 @@ int main(int argc, char* argv[])
     notify(vm);
     ifs.close();
  
-
     // Add the any missing entries to the config file.
-    {
-      //std::cout << "Add missing values to the config file" << std::endl;
-      std::ifstream input(config_file.c_str());
-      std::vector<std::string> lines;
-      { // read each line and add to lines:
-	std::string line;
-	while(getline(input,line))
-	  lines.push_back(line);
-      }
-      input.close();
-
-      std::ofstream outfile;
-      outfile.open(config_file.c_str(), std::ios_base::app);
-
-      for(po::variables_map::iterator vit = vm.begin(); 
-	  vit != vm.end(); 
-	  ++vit) {
-	std::string v_name = vit->first;
-	//std::cout << v_name  << std::endl;
-	
-	if(v_name != "config") {
-	  // TODO: instead of just checking config, check against
-	  // disallowed config-file variables.
-
-	  bool var_in_file=false;
-	
-	  for(unsigned int i=0; i < lines.size(); ++i)
-	    if(lines[i].find(vit->first) == 0)
-	      var_in_file=true;
-	  
-	  if(!var_in_file) {
-	    // The variable is not in the config file, so add it.
-
-	    //std::cout << "val missing in config; adding" << std::endl;
-
-	    // NB: we do a lot of casting and catching exceptions so
-	    // that we can cout boost::any.
-	    outfile  << vit->first
-		     << "=" ;
-	    try { outfile << vit->second.as<double>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile << vit->second.as<int>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile << vit->second.as<std::string>();
-	    } catch(...) {/* do nothing */ }
-	    try { outfile  << vit->second.as<bool>();
-	    } catch(...) {/* do nothing */ }
-	    outfile << std::endl;
-	  }
-	}
-      }
-      outfile.close();
-    }
+    update_config_file(config_file,vm);
 
     // Update the config file with the values from the command line.
     {
