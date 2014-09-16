@@ -83,7 +83,8 @@ for(int i=0; i < n; ++i) {
 	  PaletteTicks(ptick=linewidth(0.5*linewidth())));
   add(bar.fit(),point(E),30E);
 
-  draw(Label(texify(run+"/"+basename+" t="+string(t[i]))),point(S),10S);
+  draw(Label("\texttt{"+texify(run+"/"+basename)+"}, $t="+string(t[i])+"$"),point(S),10S);
+       //  draw(Label("\texttt{"+texify(run+"/"+basename)+"} t="+string(t[i]))),point(S),10S);
   
   A.add(); 
   erase(); 

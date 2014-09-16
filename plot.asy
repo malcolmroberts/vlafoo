@@ -76,4 +76,4 @@ palette(bar,barlegend,range,(0,0),(0.5cm,paletteheight),Right,Palette,
         PaletteTicks(ptick=linewidth(0.5*linewidth())));
 add(bar.fit(),point(E),30E);
 
-draw(Label("\texttt{"+run+"/"+filename+"}, $t="+string(t)+"$"),point(S),10S);
+draw(Label("\texttt{"+texify(run+"/"+filename)+"}, $t="+string(t)+"$"),point(S),10S);
