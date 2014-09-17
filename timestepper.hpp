@@ -133,8 +133,10 @@ public:
       rk_source(f0,s);
       for(unsigned int i = 0; i < rk_n; i++)
 	f0[i] += dt*s[i];
-      
-      if(dynamic) {
+
+      if(!dynamic) {
+	done=true;
+      } else {
 	T error=0.0;
 	{
 	  T* S0=S[0];
