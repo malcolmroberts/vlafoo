@@ -22,7 +22,7 @@ if(file == "tnow") {
   col=1;
 }
 
-if(val == "$dt$") {
+if(val == "dt") {
   scale(Linear,Log);
   col=2;
 }  
