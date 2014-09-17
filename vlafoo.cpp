@@ -313,6 +313,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     curves(tnow,true); 
     curves(tnow);
     plot(framenum++,tnow);
+    write_stats(it,tnow,dt,true);
   }
 
   real dt0=dt;
@@ -327,7 +328,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   bool error=false;
   
   double wall0 = get_wall_time();
-  double wallinterval=1.0;// 10  // update number of iterations every second
+  double wallinterval=10.0;// 10  // update number of iterations every second
   unsigned int checkinterval=10; //10
   int wallouts=0;
   bool go=true;
@@ -407,6 +408,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
       wall0=get_wall_time();
       wallouts++;
       std::cout << it << std::flush;
+      write_stats(it,tnow,dt);
       if(wallouts % checkinterval == 0) {
 	write_restart(tnow,dt);
 	std::cout << "\tt=" << tnow << "\tdt=" << dt << std::endl;
@@ -438,7 +440,7 @@ void VlaFoo::curve(real tnow, real value, const char* fname,
     plot_file.close();
   } else {
     plot_file.open(outname.c_str(),std::fstream::app);
-    plot_file << tnow << "\t" << value << "\n";
+    plot_file << tnow << "\t" << value << std::endl;
     plot_file.close();
   }
 }
@@ -514,6 +516,31 @@ void VlaFoo::read_restart(double &tnow, double & dt)
   std::cout << "framenum=" << framenum << std::endl; // FIXME: temp
   std::cout << "lastsave1=" << lastsave1 << std::endl; // FIXME: temp
   std::cout << "lastsave2=" << lastsave2 << std::endl; // FIXME: temp
+}
+
+void VlaFoo::write_stats(int it, double tnow, double dt, bool reset)
+{
+  std::string outname;
+  outname.append(outdir);
+  outname.append("/stats");
+  
+  std::ofstream plot_file;
+  if(reset) {
+    plot_file.open(outname.c_str(), std::ofstream::out | std::ofstream::trunc);
+    plot_file << "#"
+	      << "it" << "\t" 
+	      << "tnow" << "\t"
+	      << "dt" 
+	      << std::endl;
+    plot_file.close();
+  } else {
+    plot_file.open(outname.c_str(),std::fstream::app);
+    plot_file << it << "\t" 
+	      << tnow << "\t"
+	      << dt 
+	      << std::endl;
+    plot_file.close();
+  }
 }
 
 real VlaFoo::compute_kin_energy()

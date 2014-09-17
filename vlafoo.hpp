@@ -175,6 +175,8 @@ public:
   // Full resolution by Strang splitting
   void time_step(real &dt);
   void solve(double tnow, int itmax, real tmax, real tsave1, real tsave2);
+
+  void write_stats(int it, double tnow, double dt, bool reset=false);
 };
 
 #include <sstream>
