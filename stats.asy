@@ -8,24 +8,34 @@ size(300,200,IgnoreAspect);
 
 string runs=getstring("run");
 string file="stats";
-string val=getstring("val");
+string xval=getstring("xval");
+string yval=getstring("yval");
 
-string xlabel="iteration";
-string ylabel=val;
+string xlabel=xval;
+string ylabel=yval;
 
-int col=1;
+int xcol=0;
+int ycol=1;
+string sscale="";
 
 scale(Linear,Linear);
 
-if(file == "tnow") {
-  scale(Linear,Linear);
-  col=1;
-}
+if(xval == "it") xcol=0;
+if(xval == "t")  xcol=1;
+if(xval == "dt") xcol=2;
 
-if(val == "dt") {
-  scale(Linear,Log);
-  col=2;
-}  
+if(yval == "it") ycol=0;
+if(yval == "t")  ycol=1;
+if(yval == "dt") ycol=2;
+
+if(sscale == "")
+  sscale=getstring("scale linlin or loglin or linlog or loglog");
+if(sscale == "loglog") scale(Log,Log);
+if(sscale == "loglin") scale(Log,Linear);
+if(sscale == "linlog") scale(Linear,Log);
+if(sscale == "linlin") scale(Linear,Linear);
+
+
 bool docrop=false;
 
 string runlegs="";
@@ -57,7 +67,7 @@ while(flag) {
     real[] dt=a[2];
 
     string legend= myleg ? legends[n] : texify(filename);
-    draw(graph(it,a[col]),Pen(n),legend);
+    draw(graph(a[xcol],a[ycol]),Pen(n),legend);
   }
 }
 
