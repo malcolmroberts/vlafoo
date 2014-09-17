@@ -31,8 +31,10 @@ CXXFLAGS+=-I$(BOOST_ROOT)
 endif
 
 # Get git branch info, define and pass to preprocessor
+# depends on .git/FETCH_HEAD?
 GITHASH=\"$(shell git rev-parse --short HEAD)\"
 CXXFLAGS+=-DGITHASH=${GITHASH}
+# depends on .git/HEAD?
 GITBRANCH=\"$(shell git rev-parse --abbrev-ref HEAD)\"
 CXXFLAGS+=-DGITBRANCH=${GITBRANCH}
 
