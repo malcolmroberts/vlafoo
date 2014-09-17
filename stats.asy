@@ -10,14 +10,22 @@ string runs=getstring("run");
 string file="stats";
 string val=getstring("val");
 
-string xlabel="$t$";
+string xlabel="iteration";
 string ylabel=val;
+
+int col=1;
 
 scale(Linear,Linear);
 
-if(val == "dt") scale(Linear,Log);
-if(file == "tnow") scale(Linear,Linear);
-  
+if(file == "tnow") {
+  scale(Linear,Linear);
+  col=1;
+}
+
+if(val == "$dt$") {
+  scale(Linear,Log);
+  col=2;
+}  
 bool docrop=false;
 
 string runlegs="";
@@ -46,10 +54,10 @@ while(flag) {
     a=transpose(a);
     real[] it=a[0];
     real[] twow=a[1];
-    real[] dt=a[1];
+    real[] dt=a[2];
 
     string legend= myleg ? legends[n] : texify(filename);
-    draw(graph(it,a[1]),Pen(n),legend);
+    draw(graph(it,a[col]),Pen(n),legend);
   }
 }
 
