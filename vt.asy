@@ -17,15 +17,15 @@ if(file == "ekvt")
   ylabel="Kinetic energy";
 if(file == "eEvt")
   ylabel="Electrical energy";
-if(file == "fmin") {
+if(file == "fminvt") {
   ylabel="minimum density";
   scale(Linear,Linear);
 }
-if(file == "fmax") {
+if(file == "fmaxvt") {
   ylabel="maximum density";
   scale(Linear,Linear);
 }
-if(file == "ftot") {
+if(file == "ftotvt") {
   scale(Linear,Linear);
   ylabel="total number of particles";
 }

@@ -327,13 +327,14 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   bool error=false;
   
   double wall0 = get_wall_time();
-  double wallinterval=10.0;// 10  // update number of iterations every second
+  double wallinterval=1.0;// 10  // update number of iterations every second
   unsigned int checkinterval=10; //10
   int wallouts=0;
   bool go=true;
 
   double tsave=std::min(tsave1,tsave2);
   dt=std::min(dt,tsave); // do not jump past tsave is we are dynamic.
+  dt0=dt;
 
   std::cout << "t=" << tnow << std::endl;
   std::cout << "tmax=" << tmax << std::endl;
@@ -621,7 +622,7 @@ int main(int argc, char* argv[])
   int itmax;
   real tmax;
   real cfl;
-  real dt;
+  real dt, dtmax;
   real tsave1;
   real tsave2;
   real kx;
@@ -663,6 +664,7 @@ int main(int argc, char* argv[])
       ("tsave1", po::value<double>(&tsave1)->default_value(0.1),"tsave1")
       ("tsave2", po::value<double>(&tsave2)->default_value(1.0),"tsave2")
       ("dt", po::value<double>(&dt)->default_value(0.0),"dt")
+      ("dtmax", po::value<double>(&dtmax)->default_value(0.0),"dtmax")
       ("cfl", po::value<double>(&cfl)->default_value(0.4),"cfl")
       ("itmax", po::value<int>(&itmax)->default_value(1000000),"itmax")
       ("eps", po::value<double>(&eps)->default_value(5e-3),"eps")
@@ -734,7 +736,7 @@ int main(int argc, char* argv[])
     show_vm(vm);
   }
   
-  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax);
+  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax,dtmax);
   
   if(dt != 0.0) 
     vla.set_dt(dt);

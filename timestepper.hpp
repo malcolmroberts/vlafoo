@@ -7,12 +7,14 @@ class timestepper
 {
 private:
   T** S; // array of source buffers
+  T* f0;
   int rk_stages;
-  bool rk_allocated;
+  bool rk_allocated, f0_allocated;
   bool dynamic;
   enum RKTYPE{EULER,RK2};
   RKTYPE rk;
   double tolmin, tolmax;
+  double dtmax;
 protected:
   unsigned int rk_n; // number of data points
   
@@ -20,12 +22,7 @@ public:
   timestepper()
   {
     rk_allocated=false;
-
-    // FIXME: set parameters via command-line
-    dynamic=true;
-    //dynamic=false;
-    tolmin=0.0003;
-    tolmax=0.0005;
+    f0_allocated=false;
   }
 
   T max(T a, T b) {
@@ -41,13 +38,19 @@ public:
   }
 
   void rk_allocate(int n, std::string &rk_name, 
-		   bool dynamic0=false, double tolmin0=0.0, double tolmax0=0.0)
+		   bool dynamic0, 
+		   double tolmin0, double tolmax0,
+		   double dtmax0)
   {
+    dtmax=dtmax0;
     rk_n=n;
     rk_stages=0;
     dynamic=dynamic0;
     tolmin=tolmin0;
     tolmax=tolmax0;
+
+    rk_allocated=false;
+    f0_allocated=false;
 
     assert(tolmin < tolmax);
 
@@ -59,6 +62,7 @@ public:
     if(rk_name == "rk2") {
       rk_stages=2;
       rk=RK2;
+      f0=new T[rk_n];
     }
 
     if(rk_stages == 0) {
@@ -69,8 +73,9 @@ public:
 
     S=new T*[rk_stages];
     for(int i=0; i < rk_stages; i++)
-      S[i] = new T[rk_n] ;
+      S[i] = new T[rk_n];
     rk_allocated=true;
+    f0_allocated=true;
   }
 
   ~timestepper()
@@ -80,6 +85,9 @@ public:
 	delete S[i];
       delete[] S;
     }
+    if(f0_allocated)
+      delete[] f0;
+
   }
 
   virtual void rk_source(T *f, T *S){}
@@ -112,50 +120,64 @@ public:
   {
     T* s;
 
-    s = S[0];
-    rk_source(f,s);
-    double halfdt = 0.5 * dt;
-    for(unsigned int i = 0; i < rk_n; i++)
-      f[i] += halfdt * s[i];
+    bool done=false;
 
-    s = S[1];
-    rk_source(f,s);
-    for(unsigned int i = 0; i < rk_n; i++)
-      f[i] += dt*s[i];
-
-    if(dynamic) {
-      T error=0.0;
-      {
-	T* S0=S[0];
-	T* S1=S[1];
-	const T eps=1e-6;
-	for(unsigned int i=0; i < rk_n; i++) {
-	  T S0i = S0[i];
-	  T S1i = S1[i];
-	  T fi = f[i];
-	  T diff = dt*abs(S0i-S1i) / (max(abs(fi+dt*S0i),abs(fi+dt*S1i)) + eps);
-	  if(diff > error)
-	    error = diff;
+    while(!done) {
+      s = S[0];
+      rk_source(f,s);
+      double halfdt = 0.5 * dt;
+      for(unsigned int i = 0; i < rk_n; i++)
+	f0[i] = f[i] + halfdt * s[i];
+      
+      s = S[1];
+      rk_source(f0,s);
+      for(unsigned int i = 0; i < rk_n; i++)
+	f0[i] += dt*s[i];
+      
+      if(dynamic) {
+	T error=0.0;
+	{
+	  T* S0=S[0];
+	  T* S1=S[1];
+	  const T eps=1e-10;
+	  for(unsigned int i=0; i < rk_n; i++) {
+	    T S0i = S0[i];
+	    T S1i = S1[i];
+	    T fi = f[i];
+	    //T f0i = f0[i];
+	    //T diff = dt*abs(S0i-S1i)
+	    //   / (max(abs(fi+dt*S0i),abs(fi+dt*S1i)) + eps);
+	    T diff = abs(S0i-S1i) / (abs(fi) + eps);
+	    if(diff > error)
+	      error = diff;
+	  }
 	}
 	
-      }
-      
-      /*
-      std::cerr << "dt=" << dt << std::endl;
-      std::cout << "is the error too small: " << (error < tolmin) << std::endl;
-      std::cout << "is the error too large: " << (error > tolmax) << std::endl;
-      */
+	bool isfinite=true;
+	for(unsigned int i = 0; i < rk_n; i++) {
+	  if(isnan(f0[i]) || isinf(f0[i]))
+	    isfinite=false;
+	}
+ 
+	if(!isfinite)
+	  std::cout << isfinite << std::endl;
+	
+	if(error < tolmin && isfinite) {
+	  dt *= 1.2;
+	  done=true;
+	  for(unsigned int i = 0; i < rk_n; i++)
+	    f[i] = f0[i];
+	}
 
-      if(error < tolmin)
-	dt *= 1.4;
-      if(error > tolmax)
-	dt *= 0.7;
-      
-      /*
-      std::cout << "error=" << error<< "\tdt=" << dt << std::endl;
-      std::cout << "tolmin=" << tolmin<< "\ttolmax=" << tolmax << std::endl;
-      std::cerr << "dt=" << dt << std::endl;
-      */
+	if(!isfinite || error > tolmax)
+	  dt *= 0.7;
+	if(isfinite)      
+	  done=true;
+
+	if(dtmax > 0 && dt > dtmax)
+	  dt=dtmax;
+
+      }
     }
   }
 };
