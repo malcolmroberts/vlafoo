@@ -1,0 +1,11 @@
+#!/bin/bash
+
+c="./vlafoo"
+rundir=$1
+
+for f in "$@"; do
+    c=${c}" $f"
+done 
+echo $c
+
+nohup $c > ${rundir}/log &
