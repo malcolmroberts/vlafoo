@@ -3,10 +3,13 @@ entries.
 
 asymptote should read paramters in from config file.
 
-Output stats of number of iterations and dt (etc) every second or so.
+add "=" to strings when updating the config file to avoid
+double-counting.
 
 Make dynamic time-steppers able to recover from nans/infs (by
 repeating a time-step).
+
+re-doing bad time-steps seems to change results.
 
 Add RK4/5 method.
 
