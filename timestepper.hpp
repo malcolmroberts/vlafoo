@@ -7,9 +7,9 @@ class timestepper
 {
 private:
   T** S; // array of source buffers
-  T* f0;
+  T* fold;
   int rk_stages;
-  bool f0_allocated;
+  bool fold_allocated;
   bool dynamic;
   enum RKTYPE{EULER,RK2,RK2D};
   RKTYPE rk;
@@ -21,7 +21,7 @@ protected:
 public:
   timestepper()
   {
-    f0_allocated=false;
+    fold_allocated=false;
   }
 
   T max(T a, T b) {
@@ -48,7 +48,7 @@ public:
     tolmin=tolmin0;
     tolmax=tolmax0;
 
-    f0_allocated=false;
+    fold_allocated=false;
 
     assert(tolmin < tolmax);
 
@@ -65,8 +65,8 @@ public:
     if(rk_name == "rk2d") {
       rk_stages=2;
       rk=RK2D;
-      f0=new T[rk_n];
-      f0_allocated=true;
+      fold=new T[rk_n];
+      fold_allocated=true;
     }
 
     if(rk_stages == 0) {
@@ -85,15 +85,14 @@ public:
     for(int i=0; i < rk_stages; i++)
       delete S[i];
     delete[] S;
-    if(f0_allocated) 
-      delete[] f0;
+    if(fold_allocated) 
+      delete[] fold;
 
   }
 
   virtual void rk_source(T *f, T *S){}
   
-  void rk_step(T* f, double &dt)
-  {
+  void rk_step(T* f, double &dt) {
     switch(rk) {
     case EULER:
       euler_step(f,dt);
@@ -111,16 +110,64 @@ public:
     }
   }
 
-  void euler_step(T* f, const double dt)
-  {
+  T compute_error(T *s0, T *s1, T *f, double dt) {
+    const T eps=1e-10; // Avoids division by zero, implies that values
+		       // below eps are not reliable.
+
+    T error=0.0;
+    for(unsigned int i=0; i < rk_n; i++) {
+      T diff = dt * abs(s0[i] - s1[i]) / (abs(f[i]) + eps);
+      if(diff > error)
+	error = diff;
+    }
+    return error;
+  }
+
+  bool all_finite(T *f) {
+    bool isfinite=true;
+    for(unsigned int i = 0; i < rk_n; i++) {
+      if(isnan(fold[i]) || isinf(fold[i])) {
+	isfinite=false;
+	i=rk_n;
+      }
+    }
+    return isfinite;
+  }
+
+  bool step_success(T error, bool finite) {
+    if(error < tolmax && finite) 
+      return true;
+    return false;
+  }
+
+  void adjust_dt(T error, bool finite, double &dt) {
+    if(!finite) {
+      dt *= 0.7;
+      return;
+    }
+
+    if(error > tolmax) {
+      dt *= 0.7;
+      return;
+    }
+
+    if(error < tolmin)
+      dt *= 1.2;
+    
+    if(dtmax > 0 && dt > dtmax)
+      dt=dtmax;
+
+    return;
+  }
+
+  void euler_step(T* f, const double dt) {
     rk_source(f,S[0]);
     T* S0=S[0];
     for(unsigned int i=0; i < rk_n; i++)
       f[i] += dt*S0[i];
   }
 
-  void rk2_step(T* f, double &dt)
-  {
+  void rk2_step(T* f, double &dt) {
     T* s;
 
     s = S[0];
@@ -139,76 +186,54 @@ public:
   {
     T* s;
 
+
+    T error=0.0;
+
+    /*
+    // FIXME: restore
+    bool redo=false;
+    // backup the data in case we need to redo the step.
+    for(unsigned int i = 0; i < rk_n; i++) {
+      fold[i]=f[i]; 
+    }
+    */
+
     bool done=false;
-
-    bool redo_step=false;
-
     while(!done) {
-      if(dynamic && !redo_step) {
-	// Save the data in case we need to re-do the step
-	for(unsigned int i = 0; i < rk_n; i++)
-	  f0[i]=f[i];
-      }
 
+      /*
+      // FIXME: restore
+      if(redo) {
+	for(unsigned int i = 0; i < rk_n; i++) {
+	  //f[i]=fold[i];
+	}
+      }
+      redo=true;
+      */
+
+      // First stage
       s = S[0];
       rk_source(f,s);
       double halfdt = 0.5 * dt;
       for(unsigned int i = 0; i < rk_n; i++)
 	f[i] += halfdt * s[i];
       
+      // Second stage
       s = S[1];
       rk_source(f,s);
       for(unsigned int i = 0; i < rk_n; i++)
 	f[i] += dt*s[i];
-
-      if(!dynamic) {
-	done=true;
-      } else {
-	T error=0.0;
-	{
-	  T* S0=S[0];
-	  T* S1=S[1];
-	  const T eps=1e-10;
-	  for(unsigned int i=0; i < rk_n; i++) {
-	    T S0i = S0[i];
-	    T S1i = S1[i];
-	    T fi = f[i];
-	    //T f0i = f0[i];
-	    //T diff = dt*abs(S0i-S1i)
-	    //   / (max(abs(fi+dt*S0i),abs(fi+dt*S1i)) + eps);
-	    T diff = abs(S0i-S1i) / (abs(fi) + eps);
-	    if(diff > error)
-	      error = diff;
-	  }
-	}
-	
-	bool isfinite=true;
-	for(unsigned int i = 0; i < rk_n; i++) {
-	  if(isnan(f0[i]) || isinf(f0[i]))
-	    isfinite=false;
-	}
- 
-	//if(!isfinite) std::cout << isfinite << std::endl;
-	
-	if(error < tolmin && isfinite) {
-	  dt *= 1.2;
-	  done=true;
-	  for(unsigned int i = 0; i < rk_n; i++)
-	    f[i] = f0[i];
-	}
-
-	if(!isfinite || error > tolmax)
-	  dt *= 0.7;
-	 
-	if(isfinite)  
-	  done=true;
-
-	redo_step=isfinite;
-
-	if(dtmax > 0 && dt > dtmax)
-	  dt=dtmax;
-
-      }
+     
+      // check for error and react:
+      bool finite=all_finite(fold);
+      if(finite)
+	error=compute_error(S[0],S[1],fold,dt);
+      
+      adjust_dt(error,finite,dt);
+      
+      //done=step_success(error,finite); // FIXME: restore
+      done=true; // FIXME: temp
     }
   }
+
 };
