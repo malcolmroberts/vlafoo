@@ -9,9 +9,9 @@ private:
   T** S; // array of source buffers
   T* f0;
   int rk_stages;
-  bool rk_allocated, f0_allocated;
+  bool f0_allocated;
   bool dynamic;
-  enum RKTYPE{EULER,RK2};
+  enum RKTYPE{EULER,RK2,RK2D};
   RKTYPE rk;
   double tolmin, tolmax;
   double dtmax;
@@ -21,7 +21,6 @@ protected:
 public:
   timestepper()
   {
-    rk_allocated=false;
     f0_allocated=false;
   }
 
@@ -49,7 +48,6 @@ public:
     tolmin=tolmin0;
     tolmax=tolmax0;
 
-    rk_allocated=false;
     f0_allocated=false;
 
     assert(tolmin < tolmax);
@@ -62,7 +60,13 @@ public:
     if(rk_name == "rk2") {
       rk_stages=2;
       rk=RK2;
+      dynamic=false;
+    }
+    if(rk_name == "rk2d") {
+      rk_stages=2;
+      rk=RK2D;
       f0=new T[rk_n];
+      f0_allocated=true;
     }
 
     if(rk_stages == 0) {
@@ -74,18 +78,14 @@ public:
     S=new T*[rk_stages];
     for(int i=0; i < rk_stages; i++)
       S[i] = new T[rk_n];
-    rk_allocated=true;
-    f0_allocated=true;
   }
 
   ~timestepper()
   {
-    if(rk_allocated) {
-      for(int i=0; i < rk_stages; i++)
-	delete S[i];
-      delete[] S;
-    }
-    if(f0_allocated)
+    for(int i=0; i < rk_stages; i++)
+      delete S[i];
+    delete[] S;
+    if(f0_allocated) 
       delete[] f0;
 
   }
@@ -100,6 +100,9 @@ public:
       break;
     case RK2:
       rk2_step(f,dt);
+      break;
+    case RK2D:
+      rk2d_step(f,dt);
       break;
     default:
       std::cerr << "ERROR: unknown integrator in rk_step." << std::endl;
@@ -120,19 +123,43 @@ public:
   {
     T* s;
 
+    s = S[0];
+    rk_source(f,s);
+    double halfdt = 0.5 * dt;
+    for(unsigned int i = 0; i < rk_n; i++)
+      f[i] += halfdt * s[i];
+    
+    s = S[1];
+    rk_source(f,s);
+    for(unsigned int i = 0; i < rk_n; i++)
+      f[i] += dt*s[i];
+  }
+
+  void rk2d_step(T* f, double &dt)
+  {
+    T* s;
+
     bool done=false;
 
+    bool redo_step=false;
+
     while(!done) {
+      if(dynamic && !redo_step) {
+	// Save the data in case we need to re-do the step
+	for(unsigned int i = 0; i < rk_n; i++)
+	  f0[i]=f[i];
+      }
+
       s = S[0];
       rk_source(f,s);
       double halfdt = 0.5 * dt;
       for(unsigned int i = 0; i < rk_n; i++)
-	f0[i] = f[i] + halfdt * s[i];
+	f[i] += halfdt * s[i];
       
       s = S[1];
-      rk_source(f0,s);
+      rk_source(f,s);
       for(unsigned int i = 0; i < rk_n; i++)
-	f0[i] += dt*s[i];
+	f[i] += dt*s[i];
 
       if(!dynamic) {
 	done=true;
@@ -161,8 +188,7 @@ public:
 	    isfinite=false;
 	}
  
-	if(!isfinite)
-	  std::cout << isfinite << std::endl;
+	//if(!isfinite) std::cout << isfinite << std::endl;
 	
 	if(error < tolmin && isfinite) {
 	  dt *= 1.2;
@@ -173,8 +199,11 @@ public:
 
 	if(!isfinite || error > tolmax)
 	  dt *= 0.7;
-	if(isfinite)      
+	 
+	if(isfinite)  
 	  done=true;
+
+	redo_step=isfinite;
 
 	if(dtmax > 0 && dt > dtmax)
 	  dt=dtmax;
