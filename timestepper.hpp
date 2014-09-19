@@ -8,6 +8,7 @@ class timestepper
 private:
   T** S; // array of source buffers
   T* fold;
+  T* f_save;
   int rk_stages;
   bool fold_allocated;
   bool dynamic;
@@ -50,6 +51,12 @@ public:
 
     fold_allocated=false;
 
+    // FIXME: make this conditional on it being dynamic
+    fold=new double[rk_n];
+    fold_allocated=true;
+
+    f_save=new T[rk_n];
+
     assert(tolmin < tolmax);
 
     if(rk_name == "euler") {
@@ -65,8 +72,6 @@ public:
     if(rk_name == "rk2d") {
       rk_stages=2;
       rk=RK2D;
-      fold=new T[rk_n];
-      fold_allocated=true;
     }
 
     if(rk_stages == 0) {
@@ -126,7 +131,7 @@ public:
   bool all_finite(T *f) {
     bool isfinite=true;
     for(unsigned int i = 0; i < rk_n; i++) {
-      if(isnan(fold[i]) || isinf(fold[i])) {
+      if(isnan(f[i]) || isinf(f[i])) {
 	isfinite=false;
 	i=rk_n;
       }
@@ -135,9 +140,13 @@ public:
   }
 
   bool step_success(T error, bool finite) {
-    if(error < tolmax && finite) 
-      return true;
-    return false;
+    if(!finite) 
+      return false;
+    
+    if(error > tolmax)  
+      return false;
+    
+    return true;
   }
 
   void adjust_dt(T error, bool finite, double &dt) {
@@ -186,30 +195,23 @@ public:
   {
     T* s;
 
-
     T error=0.0;
 
-    /*
-    // FIXME: restore
     bool redo=false;
     // backup the data in case we need to redo the step.
     for(unsigned int i = 0; i < rk_n; i++) {
-      fold[i]=f[i]; 
+      f_save[i] = f[i]; 
     }
-    */
 
     bool done=false;
     while(!done) {
 
-      /*
-      // FIXME: restore
       if(redo) {
-	for(unsigned int i = 0; i < rk_n; i++) {
-	  //f[i]=fold[i];
-	}
+       	for(unsigned int i = 0; i < rk_n; i++) {
+	  f[i] = f_save[i];
+       	}
       }
       redo=true;
-      */
 
       // First stage
       s = S[0];
@@ -231,9 +233,9 @@ public:
       
       adjust_dt(error,finite,dt);
       
-      //done=step_success(error,finite); // FIXME: restore
-      done=true; // FIXME: temp
+      done=step_success(error,finite);
     }
+    //delete[] f_save;
   }
 
 };
