@@ -85,7 +85,7 @@ public:
   // Constructor (no default constructor for you!  Ha!)
   VlaFoo(int nx, int nv, real cfl, real eps, real kx, real vmax, 
 	 std::string &outdir, std::string &rk_name, bool dynamic, 
-	 double tolmin, double tolmax, double dtmax): 
+	 double tolmin, double tolmax, double dtmax, bool redo): 
     nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
     // Set parameters:
     
@@ -102,7 +102,7 @@ public:
     nq=4; // number of quadrature points
     
     // Allocate the time-stepper from the base class
-    rk_allocate(nx*nv,rk_name,dynamic,tolmin,tolmax,dtmax);
+    rk_allocate(nx*nv,rk_name,dynamic,tolmin,tolmax,dtmax,redo);
 
     std::cout << "Creating new 1D Vlasov solver:" << std::endl;
     std::cout << "nx\t" << nx << std::endl;

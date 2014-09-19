@@ -18,6 +18,7 @@ private:
   double dtmax;
 protected:
   unsigned int rk_n; // number of data points
+  bool redo;
   
 public:
   timestepper()
@@ -40,8 +41,10 @@ public:
   void rk_allocate(int n, std::string &rk_name, 
 		   bool dynamic0, 
 		   double tolmin0, double tolmax0,
-		   double dtmax0)
+		   double dtmax0,
+		   bool redo0)
   {
+    redo=redo0;
     dtmax=dtmax0;
     rk_n=n;
     rk_stages=0;
@@ -195,21 +198,25 @@ public:
 
     T error=0.0;
 
-    bool redo=false;
-    // backup the data in case we need to redo the step.
-    for(unsigned int i = 0; i < rk_n; i++) {
-      f_save[i] = f[i]; 
+    bool reset=false;
+    if(redo) {
+      // backup the data in case we need to redo the step.
+      for(unsigned int i = 0; i < rk_n; i++) {
+	f_save[i] = f[i]; 
+      }
     }
 
     bool done=false;
     while(!done) {
 
       if(redo) {
-       	for(unsigned int i = 0; i < rk_n; i++) {
-	  f[i] = f_save[i];
-       	}
+	if(reset) {
+	  for(unsigned int i = 0; i < rk_n; i++) {
+	    f[i] = f_save[i];
+	  }
+	}
+	reset=true;
       }
-      redo=true;
 
       // First stage
       s = S[0];

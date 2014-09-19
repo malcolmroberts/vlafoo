@@ -661,6 +661,7 @@ int main(int argc, char* argv[])
   bool dynamic;
   bool restart;
   double tolmin, tolmax;
+  bool redo;
   std::string config_dir_file;
 
   // option maps
@@ -703,6 +704,7 @@ int main(int argc, char* argv[])
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003),"tolmin")
       ("tolmax", po::value<double>(&tolmax)->default_value(0.0005),"tolmax")
       ("restart", po::value<bool>(&restart)->default_value(false),"restart")
+      ("redo", po::value<bool>(&redo)->default_value(false),"redo")
       ;
 
     // Options for the command line:
@@ -766,7 +768,8 @@ int main(int argc, char* argv[])
     make_asy_input(outdir,vm);
   }
   
-  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax,dtmax);
+  VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax,dtmax,
+	     redo);
   
   if(dt != 0.0) 
     vla.set_dt(dt);
