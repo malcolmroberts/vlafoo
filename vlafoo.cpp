@@ -761,6 +761,9 @@ int main(int argc, char* argv[])
     // Show all of the parameters in the variable map:
     std::cout << "Parameters used in this simulation:" << std::endl;
     show_vm(vm);
+
+    make_asy_header(vm);
+    make_asy_input(outdir,vm);
   }
   
   VlaFoo vla(nx,nv,cfl,eps,kx,vmax,outdir,rk_name,dynamic,tolmin,tolmax,dtmax);

@@ -1,5 +1,6 @@
 import graph;
 import utils;
+include "./vlafoo.asy";
 
 size(300,200,IgnoreAspect);
 
@@ -53,6 +54,11 @@ while(flag) {
   filename=substr(runs,lastpos,pos-lastpos);
   if(flag) {
     write(filename);
+    
+    eval("include \""+filename+"/vlafoo.asy\";",true);
+
+    write(outdir);
+    
     filename += "/";
     filename += file;
     lastpos=pos > 0 ? pos+1 : -1;

@@ -19,6 +19,7 @@ void make_empty_file(std::string dir,std::string file);
 void fill_config_file(std::string config_file, po::variables_map &vm);
 void update_config_file(std::string config_file, po::parsed_options &cl_opts,
 			po::variables_map &vm);
-
+void make_asy_header(po::variables_map vm);
+void make_asy_input(std::string dir, po::variables_map vm);
 
 #endif

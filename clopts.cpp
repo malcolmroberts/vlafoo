@@ -19,7 +19,7 @@ void show_vm(po::variables_map vm)
   }
 }
 
-void make_empty_file(std::string dir,std::string file)
+void make_empty_file(std::string dir, std::string file)
 {
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   std::string dir_file=dir+"/"+file;
@@ -167,4 +167,75 @@ void update_config_file(std::string config_dir_file, po::parsed_options &cl_opts
     }
     outfile.close();
   }
+}
+
+void make_asy_header(po::variables_map vm)
+{
+  std::string asyfile="vlafoo.asy";
+
+  std::ofstream outfile;
+  outfile.open(asyfile.c_str());
+
+  for(po::variables_map::iterator vit = vm.begin(); 
+      vit != vm.end(); 
+      ++vit) {
+    try {  // doubles
+      vit->second.as<double>();
+      outfile << "real";
+    } catch(...) {/* do nothing */ }
+    try { 
+      vit->second.as<int>();
+      outfile << "int";
+    } catch(...) {/* do nothing */ }
+    try { 
+      vit->second.as<std::string>();
+      outfile << "string";
+    } 
+    catch(...) {/* do nothing */ }
+    try { 
+      vit->second.as<bool>();
+      outfile << "bool";
+    } 
+    catch(...) {/* do nothing */ }
+    outfile << " " <<  vit->first << ";" << std::endl;
+  }
+
+  outfile.close();
+}
+void make_asy_input(std::string dir, po::variables_map vm)
+{
+  std::string asyfile="vlafoo.asy";
+  make_empty_file(dir, asyfile);
+
+  std::string asy_dir_file=dir+"/"+asyfile;
+  std::ofstream outfile;
+  outfile.open(asy_dir_file.c_str());
+
+  for(po::variables_map::iterator vit = vm.begin(); 
+      vit != vm.end(); 
+      ++vit) {
+    outfile <<  vit->first << "=";
+    try {  // doubles
+      outfile << vit->second.as<double>();
+    } catch(...) {/* do nothing */ }
+    try { 
+      outfile << vit->second.as<int>();
+    } catch(...) {/* do nothing */ }
+    try { 
+      outfile << "\"" 
+	      << vit->second.as<std::string>()
+	      << "\"" ;
+    } 
+    catch(...) {/* do nothing */ }
+    try { 
+      if(vit->second.as<bool>())
+	outfile << "true";
+      else
+	outfile << "false";
+    } 
+    catch(...) {/* do nothing */ }
+    outfile << ";" << std::endl;
+  }
+
+  outfile.close();
 }
