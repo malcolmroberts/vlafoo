@@ -144,6 +144,9 @@ public:
     if(!finite) 
       return false;
     
+    if(!redo)
+      return true;
+
     if(error > tolmax)  
       return false;
     
@@ -199,24 +202,20 @@ public:
     T error=0.0;
 
     bool reset=false;
-    if(redo) {
-      // backup the data in case we need to redo the step.
-      for(unsigned int i = 0; i < rk_n; i++) {
-	f_save[i] = f[i]; 
-      }
+    // backup the data in case we need to redo the step.
+    for(unsigned int i = 0; i < rk_n; i++) {
+      f_save[i] = f[i]; 
     }
 
     bool done=false;
     while(!done) {
 
-      if(redo) {
-	if(reset) {
-	  for(unsigned int i = 0; i < rk_n; i++) {
-	    f[i] = f_save[i];
-	  }
+      if(reset) {
+	for(unsigned int i = 0; i < rk_n; i++) {
+	  f[i] = f_save[i];
 	}
-	reset=true;
       }
+      reset=true;
 
       // First stage
       s = S[0];
@@ -237,7 +236,7 @@ public:
 	error=compute_error(S[0],S[1],f,f_save,dt);
       adjust_dt(error,finite,dt);
       
-      done=!redo || step_success(error,finite);
+      done=step_success(error,finite);
     }
   }
 
