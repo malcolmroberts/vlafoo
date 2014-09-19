@@ -57,8 +57,6 @@ while(flag) {
     
     eval("include \""+filename+"/vlafoo.asy\";",true);
 
-    write(outdir);
-    
     filename += "/";
     filename += file;
     lastpos=pos > 0 ? pos+1 : -1;
