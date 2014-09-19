@@ -7,12 +7,19 @@ include "./vlafoo.asy";
 
 string run=getstring("run");
 
-
 eval("include \""+run+"/vlafoo.asy\";",true);
+
 
 string filename=getstring("filename");
 //file fin=input(filename).line();
 file fin=input(run+"/"+filename,mode="xdr");
+
+real vcut=0;
+
+usersetting();
+
+if(vcut == 0)
+  vcut=getreal("vcut");
 
 real t=fin;
 
@@ -23,6 +30,7 @@ write("time="+string(t));
 
 int nx=10;
 int nv=10;
+
 
 real L=31.4159;
 L=getreal("L");
@@ -62,6 +70,11 @@ for(int i=0; i < f.length; ++i) {
 bounds range;
 range=image(f,Full,a,b,Palette);  // Full colour bar
 
+if(vcut > 0 && vcut < vmax) {
+  real f=vcut/vmax;
+  limits((a.x,f*a.y),(b.x,f*b.y),Crop);
+}
+  
 if(nneg > 0) {
   write(nneg/(f.length*f[0].length));
   negmean /= nneg;

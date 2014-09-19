@@ -1,6 +1,7 @@
 import graph;
 import palette;
 import cooltowarm;
+include "./vlafoo.asy";
 
 import animate; 
 //settings.render=2; 
@@ -14,13 +15,23 @@ size(10cm,10cm,IgnoreAspect);
 animation A;
 
 string run=getstring("run");
+
+eval("include \""+run+"/vlafoo.asy\";",true);
+
 string basename=getstring("basename");
 //string basename=getstring("basename");
 int n=getint("n");
-real vmax=6.0;
+//real vmax=6.0;
 real L=31.4159;
 L=getreal("L");
-vmax=getreal("vmax");
+
+real vcut=0;
+
+usersetting();
+
+if(vcut == 0)
+  vcut=getreal("vcut");
+
 pair a=(0,-vmax);
 pair b=(L,vmax);
 
@@ -71,6 +82,12 @@ for(int i=0; i < n; ++i) {
   
   range=image(f,Range(fmin,fmax),a,b,Palette); //global full colour bar
   //range=image(f,Full,a,b,Palette);  // Full colour bar
+
+  if(vcut > 0 && vcut < vmax) {
+    real f=vcut/vmax;
+    limits((a.x,f*a.y),(b.x,f*b.y),Crop);
+  }
+  
   
   xaxis("$x$",BottomTop,LeftTicks,above=true);
   yaxis("$v$",LeftRight,RightTicks,above=true);
