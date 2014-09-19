@@ -7,9 +7,9 @@ class timestepper
 {
 private:
   T** S; // array of source buffers
-  T* fold;
   T* f_save;
   int rk_stages;
+  bool f_save_allocated;
   bool fold_allocated;
   bool dynamic;
   enum RKTYPE{EULER,RK2,RK2D};
@@ -22,7 +22,7 @@ protected:
 public:
   timestepper()
   {
-    fold_allocated=false;
+    f_save_allocated=false;
   }
 
   T max(T a, T b) {
@@ -49,13 +49,7 @@ public:
     tolmin=tolmin0;
     tolmax=tolmax0;
 
-    fold_allocated=false;
-
-    // FIXME: make this conditional on it being dynamic
-    fold=new double[rk_n];
-    fold_allocated=true;
-
-    f_save=new T[rk_n];
+    f_save_allocated=false;
 
     assert(tolmin < tolmax);
 
@@ -72,6 +66,9 @@ public:
     if(rk_name == "rk2d") {
       rk_stages=2;
       rk=RK2D;
+      
+      f_save_allocated=true;
+      f_save=new T[rk_n];
     }
 
     if(rk_stages == 0) {
@@ -90,8 +87,8 @@ public:
     for(int i=0; i < rk_stages; i++)
       delete S[i];
     delete[] S;
-    if(fold_allocated) 
-      delete[] fold;
+    if(f_save_allocated) 
+      delete[] f_save;
 
   }
 
@@ -115,13 +112,14 @@ public:
     }
   }
 
-  T compute_error(T *s0, T *s1, T *f, double dt) {
-    const T eps=1e-10; // Avoids division by zero, implies that values
+  T compute_error(T *s0, T *s1, T *f, T* f_save, double dt) {
+    const T eps=1e-15; // Avoids division by zero, implies that values
 		       // below eps are not reliable.
 
     T error=0.0;
     for(unsigned int i=0; i < rk_n; i++) {
-      T diff = dt * abs(s0[i] - s1[i]) / (abs(f[i]) + eps);
+      T diff = dt * abs(s0[i] - s1[i]) 
+	/ (0.5*(abs(f[i]) + abs(f_save[i])) + eps);
       if(diff > error)
 	error = diff;
     }
@@ -227,15 +225,13 @@ public:
 	f[i] += dt*s[i];
      
       // check for error and react:
-      bool finite=all_finite(fold);
+      bool finite=all_finite(f);
       if(finite)
-	error=compute_error(S[0],S[1],fold,dt);
-      
+	error=compute_error(S[0],S[1],f,f_save,dt);
       adjust_dt(error,finite,dt);
       
       done=step_success(error,finite);
     }
-    //delete[] f_save;
   }
 
 };
