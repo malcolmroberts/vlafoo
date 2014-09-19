@@ -237,7 +237,7 @@ public:
 	error=compute_error(S[0],S[1],f,f_save,dt);
       adjust_dt(error,finite,dt);
       
-      done=step_success(error,finite);
+      done=!redo || step_success(error,finite);
     }
   }
 
