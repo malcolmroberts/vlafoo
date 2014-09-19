@@ -3,8 +3,13 @@ size(10cm,10cm,IgnoreAspect);
 import graph;
 import palette;
 import cooltowarm;
+include "./vlafoo.asy";
 
 string run=getstring("run");
+
+
+eval("include \""+run+"/vlafoo.asy\";",true);
+
 string filename=getstring("filename");
 //file fin=input(filename).line();
 file fin=input(run+"/"+filename,mode="xdr");
@@ -19,10 +24,8 @@ write("time="+string(t));
 int nx=10;
 int nv=10;
 
-real vmax=6.0;
 real L=31.4159;
 L=getreal("L");
-vmax=getreal("vmax");
 pair a=(0,-vmax);
 pair b=(L,vmax);
 
