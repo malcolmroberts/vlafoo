@@ -3,9 +3,11 @@
 c="./vlafoo"
 rundir=$1
 
+mkdir -p $rundir
+
 for f in "$@"; do
     c=${c}" $f"
 done 
 echo $c
 
-nohup $c > ${rundir}/log &
+nice -n 19 ionice -c 3 nohup $c > ${rundir}/log &
