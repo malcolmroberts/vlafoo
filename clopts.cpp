@@ -87,86 +87,88 @@ void fill_config_file(std::string config_dir_file, po::variables_map &vm)
   outfile.close();
 }
 
-void update_config_file(std::string config_dir_file, po::parsed_options &cl_opts,
+void update_config_file(std::string config_dir_file, 
+			po::parsed_options &cl_opts,
 			po::variables_map &vm)
 {
   // Update the config file with the values from the command line.
-  {
-    //std::cout << "update config file with values from command-line" 
-    //	<< std::endl;
+  
+  //std::cout << "update config file with values from command-line" 
+  //	<< std::endl;
 
-    // Read the config file and store it, line-by-line, in lines.
-    std::ifstream input(config_dir_file.c_str());
-    std::vector<std::string> lines;
-    { // read each line and add to lines:
-      std::string line;
-      while(getline(input,line))
-	lines.push_back(line);
-    }
-    input.close();
+  // Read the config file and store it, line-by-line, in lines.
+  std::ifstream input(config_dir_file.c_str());
+  std::vector<std::string> lines;
+  { // read each line and add to lines:
+    std::string line;
+    while(getline(input,line))
+      lines.push_back(line);
+  }
+  input.close();
 
-    /*
-      std::cout << "Lines from config file:" << std::endl;
-      for(unsigned int i=0; i < lines.size(); ++i)
-      std::cout << lines[i] << std::endl;
-      std::cout << std::endl;
-    */
+  /*
+    std::cout << "Lines from config file:" << std::endl;
+    for(unsigned int i=0; i < lines.size(); ++i)
+    std::cout << lines[i] << std::endl;
+    std::cout << std::endl;
+  */
 
-    // Re-write the config file, line-by-line, replacing old
-    // values with new values from the command-line.
-    std::ofstream outfile;
-    outfile.open(config_dir_file.c_str());
+  // Re-write the config file, line-by-line, replacing old
+  // values with new values from the command-line.
+  std::ofstream outfile;
+  outfile.open(config_dir_file.c_str());
       
-    for(unsigned int i=0; i < lines.size(); ++i) {
-      // Search for updates from command-line:
-      bool isfound=false;
-      for(vec_opt::iterator ipo = cl_opts.options.begin();
-	  ipo != cl_opts.options.end(); 
-	  ++ipo) {
-	po::basic_option<char>& l_option = *ipo;
+  for(unsigned int i=0; i < lines.size(); ++i) {
+    // Search for updates from command-line:
+    bool isfound=false;
+    for(vec_opt::iterator ipo = cl_opts.options.begin();
+	ipo != cl_opts.options.end(); 
+	++ipo) {
+      po::basic_option<char>& l_option = *ipo;
 
-	//std::cout << l_option.string_key << std::endl;
+      //std::cout << l_option.string_key << std::endl;
 
-	// TODO improve the check if var name is allowed
-	if(l_option.string_key != "config" 
-	   && l_option.string_key != "outdir"
-	   && l_option.string_key != "") {
-	  if(!isfound) {
+      // TODO improve the check if var name is allowed
+      if(l_option.string_key != "config" 
+	 && l_option.string_key != "outdir"
+	 && l_option.string_key != "") {
+	if(!isfound) {
 
-	    int found = lines[i].find(l_option.string_key);
-	    isfound=(found == 0);
+	  std::string search_string=l_option.string_key+"=";
 
-	    if(isfound) {
-	      //std::cout <<  l_option.string_key << std::endl;
-	      //std::cout << "\tadding to config file" << std::endl;
-	      // Replace the line with the new value
-	      outfile << l_option.string_key 
-		      << "="
-		      << l_option.value[0] << std::endl;
-	      /*
-		std::cout << "command line:\t"
-		<< l_option.string_key 
-		<< "=" 
-		<< l_option.value[0] << std::endl;
-		std::cout << "\tfound " << l_option.string_key << std::endl;
-		std::cout << config_dir_file << ":\t" << lines[i] << std::endl;
-	      */
-	      //ipo=cl_opts.options.end(); // stop looping.
-	    }
+	  int found = lines[i].find(search_string); // FIXME: add "=" at end
+	  isfound=(found == 0);
+
+	  if(isfound) {
+	    //std::cout <<  l_option.string_key << std::endl;
+	    //std::cout << "\tadding to config file" << std::endl;
+	    // Replace the line with the new value
+	    outfile << l_option.string_key 
+		    << "="
+		    << l_option.value[0] << std::endl;
+	    /*
+	      std::cout << "command line:\t"
+	      << l_option.string_key 
+	      << "=" 
+	      << l_option.value[0] << std::endl;
+	      std::cout << "\tfound " << l_option.string_key << std::endl;
+	      std::cout << config_dir_file << ":\t" << lines[i] << std::endl;
+	    */
+	    //ipo=cl_opts.options.end(); // stop looping.
 	  }
 	}
       }
-	
-      if(!isfound) {
-	// Keep the original line
-	//std::cout << "keep old line:" << std::endl;
-	//std::cout << lines[i] << std::endl;
-	outfile << lines[i] << std::endl;
-      }
-	
     }
-    outfile.close();
+	
+    if(!isfound) {
+      // Keep the original line
+      //std::cout << "keep old line:" << std::endl;
+      //std::cout << lines[i] << std::endl;
+      outfile << lines[i] << std::endl;
+    }
+	
   }
+  outfile.close();
 }
 
 void make_asy_header(po::variables_map vm)
@@ -175,7 +177,7 @@ void make_asy_header(po::variables_map vm)
 
   std::ofstream outfile;
   outfile.open(asyfile.c_str());
-
+  
   for(po::variables_map::iterator vit = vm.begin(); 
       vit != vm.end(); 
       ++vit) {
@@ -199,9 +201,9 @@ void make_asy_header(po::variables_map vm)
     catch(...) {/* do nothing */ }
     outfile << " " <<  vit->first << ";" << std::endl;
   }
-
   outfile.close();
 }
+
 void make_asy_input(std::string dir, po::variables_map vm)
 {
   std::string asyfile="vlafoo.asy";
