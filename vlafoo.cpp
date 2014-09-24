@@ -297,11 +297,14 @@ void VlaFoo::time_step(real &dt)
 {
   // Time-step by Strang splitting.
 
-  // Advection term from rho (mean velocity) in space:
-  transport_x(dt);
+  // NB: transport_v may redo time-steps (adjusting dt in the process)
+  // and must therefore be called first.
 
   // Compute the changes in velocity due to the electric field E:
   transport_v(f,dt);
+ 
+  // Advection term from rho (mean velocity) in space:
+  transport_x(dt);
 }
 
 void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
