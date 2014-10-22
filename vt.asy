@@ -53,12 +53,14 @@ while(flag) {
   if(lastpos == -1) {filename=""; flag=false;}
   filename=substr(runs,lastpos,pos-lastpos);
   if(flag) {
-    write(filename);
-    
+
+    // Include the asy information
     eval("include \""+filename+"/vlafoo.asy\";",true);
 
     filename += "/";
     filename += file;
+    write(filename);
+    
     lastpos=pos > 0 ? pos+1 : -1;
     
     file fin=input(filename).line();
