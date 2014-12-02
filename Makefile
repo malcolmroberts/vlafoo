@@ -1,4 +1,4 @@
-CC=g++
+CXX=g++
 
 LDFLAGS=
 #LDFLAGS+=-L$(HOME)/boost
@@ -43,31 +43,42 @@ CXXFLAGS+=-DFFTWPP_SINGLE_THREAD
 
 VPATH=.:$(FFTWPP_INCLUDE_PATH)
 
+# Define the source files and objects
+SRCS_CPP = clopts.cpp timestepper.cpp vlafoo.cpp
+SRCS_CC = fftw++.cc
+OBJS=$(SRCS_CPP:.cpp=.o)
+OBJS+= $(SRCS_CC:.cc=.o)
+
 all: vlafoo 
 
-vlafoo: vlafoo.o clopts.o timestepper.o fftw++.o
-	$(CC) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+vlafoo: $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-#%.cc: %.h
-#%.cpp: %.hpp
+# If we are not "make clean", then creat the dependency files
+ifeq ($(MAKECMDGOALS),clean)
+DEPS=
+else
+MAKEDEPEND=$(CXXFLAGS) -O0 -M -DDEPEND
+DEPS=$(SRCS_CPP:.cpp=.d)
+DEPS+=":"$(SRCS_CC:.cc=.d)
+.cpp.d:
+	echo -n "$*.d ">$*.d
+	$(CXX) $(MAKEDEPEND) $*.cpp>>$*.d
+.cc.d:
+	echo -n "$*.d ">$*.d
+	$(CXX) $(MAKEDEPEND) $*.cc>>$*.d
+-include $(DEPS)
+endif
 
-# The combination of .cc/.h and .cpp/.hpp means object compilation is
-# hand-specified.
-vlafoo.o: vlafoo.cpp vlafoo.hpp clopts.hpp timestepper.hpp fftw++.h
-	$(CXX) $(CXXFLAGS) -c $<
-
-fftw++.o: fftw++.cc fftw++.h
-	$(CXX) $(CXXFLAGS) -c $<
-
-timestepper.o: timestepper.cpp timestepper.hpp
-	$(CXX) $(CXXFLAGS) -c $<
-
-clopts.o: clopts.cpp clopts.hpp
-	$(CXX) $(CXXFLAGS) -c $<
-
-
+# Create the objects based on the dependency fiels
+.o: %.d
+	@echo $@
+	$(CXX) $(CXXFLAGS) $^ -c -o $@
 
 make clean:
-	rm -f vlafoo *.o
+	rm -f vlafoo *.o *.d
+
+# Needed so that the .d files are generated.
+.SUFFIXES: .cc .cpp .o .d
 
 FORCE:
