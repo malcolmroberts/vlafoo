@@ -9,7 +9,7 @@ namespace po = boost::program_options;
 // Compute initial condition
 void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
 				bool restart) {
-  real overs2pi=1.0/sqrt(2.0*PI);
+  double overs2pi=1.0/sqrt(2.0*PI);
 
   f.Load(0.0);
   framenum=0;
@@ -42,10 +42,10 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
     // landau damping
     // f0=exp(-vt*vt/2)*(1+eps*cos(kx*xt))/sqrt(2*pi)
     for(int i=0; i < nx; i++){
-      real x=i*dx;
-      real xterm=(1.0+eps*cos(kx*x))*overs2pi;
+      double x=i*dx;
+      double xterm=(1.0+eps*cos(kx*x))*overs2pi;
       for(int j=0; j < nv; j++){
-	real v=index2v(j);
+	double v=index2v(j);
 	f[i][j]=exp(-v*v*0.5)*xterm;
       }
     }
@@ -58,15 +58,15 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
     //double-stream instability
     // f0=(exp(-(v-v0)*(v-v0)/2)+exp(-(v+v0)*(v+v0)/2))*
     // (1+eps*cos(kx*x))/sqrt(2*pi)/2
-    real v0=3.0;
-    real overs2pi=0.5/sqrt(2.0*PI);
+    double v0=3.0;
+    double overs2pi=0.5/sqrt(2.0*PI);
     for(int i=0; i < nx; i++){
-      real x=i*dx;
-      real xterm=(1.0+eps*cos(kx*x))*overs2pi;
+      double x=i*dx;
+      double xterm=(1.0+eps*cos(kx*x))*overs2pi;
       for(int j=0; j < nv; j++){
-	real v=index2v(j);
-	real sum=v+v0;
-	real diff=v-v0;
+	double v=index2v(j);
+	double sum=v+v0;
+	double diff=v-v0;
 	f[i][j]=xterm*(exp(-0.5*sum*sum) + exp(-0.5*diff*diff));
       }
     }
@@ -78,16 +78,16 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
   exit(1);
 }
 
-real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
+double VlaFoo::interpolate(double x, int nq, double* x0, double* y0)
 {
   // Lagrange polynomial interpolation
-  real val=0;
+  double val=0;
   if(nq > 0) {
     // NB: this is probably not the most numerically robust way to do
     // this.
     for(int j=0; j < nq; ++j) {
-      real lj=1.0;
-      real xj=x0[j];
+      double lj=1.0;
+      double xj=x0[j];
       for(int m=0; m < j; ++m)
 	lj *= (x-x0[m])/(xj-x0[m]);
       for(int m=j+1; m < nq; ++m)
@@ -104,7 +104,7 @@ real VlaFoo::interpolate(real x, int nq, real* x0, real* y0)
   return val;
 }
 
-void VlaFoo::transport_x(real &dtx)
+void VlaFoo::transport_x(double &dtx)
 {
   // Advance f in time, taking accont the A\partial_x f term, with
   // A=diag[v].
@@ -113,20 +113,20 @@ void VlaFoo::transport_x(real &dtx)
   // particles in the array at (i,j) have position x_i and velocity
   // v(j).
 
-  real *x0=new real[nq];
-  real *f0=new real[nq];
+  double *x0=new double[nq];
+  double *f0=new double[nq];
 
-  real overdx=1.0/dx;
+  double overdx=1.0/dx;
 
   // f(x,t+dt) = f(x-v*dt,t)
   for(int i=0; i < nx; i++) {
     for(int j=0; j < nv; j++) {
-      real x=i*dx; // current position
-      real v=index2v(j);
+      double x=i*dx; // current position
+      double v=index2v(j);
       if(x < 0.0) x += L;
       if(x > L) x -= L;
 
-      real xold=x-v*dtx; // previous position
+      double xold=x-v*dtx; // previous position
       if(xold < 0.0) xold += L;
       if(xold > L) xold -= L;
       
@@ -153,7 +153,7 @@ void VlaFoo::transport_x(real &dtx)
       }
 
       // Put the updated f in S:
-      real val=interpolate(xold,nq,x0,f0);
+      double val=interpolate(xold,nq,x0,f0);
       S[i][j]=val;
     }
   }
@@ -163,26 +163,26 @@ void VlaFoo::transport_x(real &dtx)
 
   // TODO: optimise into a swap?
   for(int i=0; i < nx; ++i) {
-    array1<real>::opt fi=f[i];
-    array1<real>::opt Si=S[i];
+    array1<double>::opt fi=f[i];
+    array1<double>::opt Si=S[i];
     for(int j=0; j < nv; ++j)
       fi[j]=Si[j];
   }
 }
 
-void VlaFoo::compute_rho(array2<real> &f)
+void VlaFoo::compute_rho(array2<double> &f)
 {  
   // \rho = \int \approx  dv \sum_j f_j(x,t)
   for(int i=0; i < nx; i++) {
-    real rhoi=0.0;
-    array1<real>::opt fi=f[i];
+    double rhoi=0.0;
+    array1<double>::opt fi=f[i];
     for(int j=0; j < nv; j++)
       rhoi += fi[j];
     rho[i]=rhoi*dv;
   }
 }
 
-void VlaFoo::compute_E(array2<real> &f)
+void VlaFoo::compute_E(array2<double> &f)
 {
   // Compute
   // E(x) = \int dx \int_{-vmax}^{vmax} dv f(x,v)
@@ -201,11 +201,11 @@ void VlaFoo::compute_E(array2<real> &f)
 
   // Set mean to zero:
   rhok[0]=0.0;
-  real overnx=1.0/nx;
+  double overnx=1.0/nx;
   Complex Iovernx=Complex(0,overnx);
   int stop=nxk-1;
   for(int i=1; i < stop; i++) {
-    real k0xi=k0x*i;
+    double k0xi=k0x*i;
     rhok[i] *= -Iovernx/k0xi;
   }
   rhok[nxk-1]=0.0; // kill the nyquist
@@ -218,13 +218,13 @@ void VlaFoo::compute_E(array2<real> &f)
 
   // Set mean to zero:
   rhok[0]=0.0;
-  real overnx=1.0/nx;
+  double overnx=1.0/nx;
   for(int i=1; i < nxk-1; i++) {
-    real k=k0x*i;
+    double k=k0x*i;
     Complex rhoki=rhok[i];
-    real re=rhoki.real();
-    real im=rhoki.imag();
-    real ct=1.0/tan(PI*k*overnx);
+    double re=rhoki.real();
+    double im=rhoki.imag();
+    double ct=1.0/tan(PI*k*overnx);
     rhok[i]=0.5*k*dx*ct*Complex(im,-re);
   }
   rhok[nxk-1]=0.0; // kill the nyquist
@@ -232,7 +232,7 @@ void VlaFoo::compute_E(array2<real> &f)
 #endif
 }
 
-void VlaFoo::compute_dfdv(array2<real> &f, array2<real> &S)
+void VlaFoo::compute_dfdv(array2<double> &f, array2<double> &S)
 {
   // compute \partial_v f_i via Fourier differentiation.
   
@@ -241,10 +241,10 @@ void VlaFoo::compute_dfdv(array2<real> &f, array2<real> &S)
   Complex I=Complex(0,1);
 
   for(int i=0; i<nx; i++) {
-    // copy velocity for each i into a temp buffer (NB real to complex
+    // copy velocity for each i into a temp buffer (NB double to complex
     // FFT overwrites input):
-    array1<real>::opt fi=f[i];
-    array1<real>::opt Si=S[i];
+    array1<double>::opt fi=f[i];
+    array1<double>::opt Si=S[i];
 
     for(int j=0; j < nv; ++j)
       vtemp[j]=fi[j];
@@ -252,7 +252,7 @@ void VlaFoo::compute_dfdv(array2<real> &f, array2<real> &S)
     rc_v->fft(vtemp,vtempk);
     unsigned int stop=nvk-1;
     for(unsigned j=0; j < stop; j++) {
-      real k=j*k0v;
+      double k=j*k0v;
       vtempk[j] *= I*k*overnv;
     }
     vtempk[stop]=0.0;  // Set Nyquist to zero.
@@ -262,30 +262,30 @@ void VlaFoo::compute_dfdv(array2<real> &f, array2<real> &S)
 
 
 // Compute -E_i \partial_v f_i
-void VlaFoo::compute_negEdfdv(array2<real> &f, array2<real> &S)
+void VlaFoo::compute_negEdfdv(array2<double> &f, array2<double> &S)
 {
   compute_E(f);
   compute_dfdv(f,S);
 
   for(int i = 0; i < nx; ++i) {
-    array1<real>::opt Si = S[i];
-    real Ei = E[i];
+    array1<double>::opt Si = S[i];
+    double Ei = E[i];
     for(int j = 0; j < nv; ++j)
       Si[j] *= -Ei;
   }
 }
 
-void VlaFoo::rk_source(real *f0, real *S0)
+void VlaFoo::rk_source(double *f0, double *S0)
 {
   // wrapper for compute_negEdfdv.
 
-  array2<real> f(nx,nv,f0);
-  array2<real> S(nx,nv,S0);
+  array2<double> f(nx,nv,f0);
+  array2<double> S(nx,nv,S0);
   compute_negEdfdv(f,S);
 }
 
 // Time step dtv of velocity resolution by Fourier
-void VlaFoo::transport_v(array2<real> &f, real &dtv)
+void VlaFoo::transport_v(array2<double> &f, double &dtv)
 {
   // source term for f_i is -E_i \partial_v f_i and is called via
   // VlaFoo::rk_source.
@@ -293,7 +293,7 @@ void VlaFoo::transport_v(array2<real> &f, real &dtv)
   rk_step(f(),dtv);
 }
 
-void VlaFoo::time_step(real &dt)
+void VlaFoo::time_step(double &dt)
 {
   // Time-step by Strang splitting.
 
@@ -307,7 +307,7 @@ void VlaFoo::time_step(real &dt)
   transport_x(dt);
 }
 
-void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
+void VlaFoo::solve(double tnow, int itmax, double tmax, double tsave1, double tsave2)
 {
   int it=0;
 
@@ -319,13 +319,13 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
     write_stats(it,tnow,dt,true);
   }
 
-  real dt0=dt;
+  double dt0=dt;
 
   // TODO: saving logic should deal more elegantly with multiple cases.
-  real nextsave1=tnow+tsave1;
-  real nextsave2=tnow+tsave2;
+  double nextsave1=tnow+tsave1;
+  double nextsave2=tnow+tsave2;
 
-  real nextsave=std::min(nextsave1,nextsave2);
+  double nextsave=std::min(nextsave1,nextsave2);
   bool savenow=false;
 
   bool error=false;
@@ -430,7 +430,7 @@ void VlaFoo::solve(double tnow, int itmax, real tmax, real tsave1, real tsave2)
   }
 }
 
-void VlaFoo::curve(real tnow, real value, const char* fname,
+void VlaFoo::curve(double tnow, double value, const char* fname,
 		   bool clear_file)
 {
   std::string outname;
@@ -448,7 +448,7 @@ void VlaFoo::curve(real tnow, real value, const char* fname,
   }
 }
 
-void VlaFoo::curves(real tnow, bool clear_file)
+void VlaFoo::curves(double tnow, bool clear_file)
 {
   curve(tnow,compute_kin_energy(),"ekvt",clear_file);
   curve(tnow,compute_elec_energy(),"eEvt",clear_file);
@@ -457,7 +457,7 @@ void VlaFoo::curves(real tnow, bool clear_file)
   curve(tnow,fmax(),"ftotvt",clear_file);
 }
 
-void VlaFoo::plot(int framenum, real tnow)
+void VlaFoo::plot(int framenum, double tnow)
 {
   // output the 2D field at a given time.  
 
@@ -546,36 +546,36 @@ void VlaFoo::write_stats(int it, double tnow, double dt, bool reset)
   }
 }
 
-real VlaFoo::compute_kin_energy()
+double VlaFoo::compute_kin_energy()
 {
-  real energy=0.0;
+  double energy=0.0;
   for(int i=0; i < nx; i++) {
     for(int j=0; j < nv; j++) {
-      real vj=index2v(j);
+      double vj=index2v(j);
       energy += dv*dx*f[i][j]*vj*vj;
     }
   }
   return energy;
 }
 
-real VlaFoo::compute_elec_energy()
+double VlaFoo::compute_elec_energy()
 {
   compute_E(f);
-  real energy=0.0;
+  double energy=0.0;
   for(int i=0; i < nx; i++) {
-    real Ei=E[i];
+    double Ei=E[i];
     energy += dx*Ei*Ei;
   }
   return sqrt(energy);
 }
 
 
-real VlaFoo::fmin()
+double VlaFoo::fmin()
 {
-  real val=f[0][0];
+  double val=f[0][0];
   
   for(int i=0; i < nx; ++i) {
-    array1<real>::opt fi=f[i];
+    array1<double>::opt fi=f[i];
     for(int j=0; j < nv; ++j) {
       if(fi[j] < val) 
 	val=fi[j];
@@ -584,12 +584,12 @@ real VlaFoo::fmin()
   return val;
 }
 
-real VlaFoo::fmax()
+double VlaFoo::fmax()
 {
-  real val=f[0][0];
+  double val=f[0][0];
   
   for(int i=0; i < nx; ++i) {
-    array1<real>::opt fi=f[i];
+    array1<double>::opt fi=f[i];
     for(int j=0; j < nv; ++j) {
       if(fi[j] > val) 
 	val=fi[j];
@@ -598,12 +598,12 @@ real VlaFoo::fmax()
   return val;
 }
 
-real VlaFoo::ftot()
+double VlaFoo::ftot()
 {
-  real val=0.0;
+  double val=0.0;
   
   for(int i=0; i < nx; ++i) {
-    array1<real>::opt fi=f[i];
+    array1<double>::opt fi=f[i];
     for(int j=0; j < nv; ++j)
       val += fi[j];
   }
@@ -614,9 +614,9 @@ bool VlaFoo::check_for_error()
 {
   bool error=false;
   for(int i=0; i < nx; ++i) {
-    real *fi=f[i];
+    double *fi=f[i];
     for(int j=0; j < nv; ++j) {
-      real fij=fi[j];
+      double fij=fi[j];
       if(isnan(fij) || isinf(fij)) {
 	error=true;
 	break;
@@ -633,11 +633,13 @@ int main(int argc, char* argv[])
 	    <<"This is VlaFoo, Welcome to VlaFoo.\n" 
 	    << "\tAnything is possible at VlaFoo...\n" 
 	    <<"\t...the only limit is yourself.\n" 
-	    <<"\tWelcom to VlaFoo." 
+	    <<"\tWelcome to VlaFoo." 
 	    << std::endl;
+
   std::cout << "git branch: " << GITBRANCH
 	    << "\tgit commit version: " << GITHASH 
 	    << std::endl;
+
   std::cout << "command:" << std::endl;
   for(int i=0; i < argc; ++i) { 
     std::cout << argv[i];
@@ -650,14 +652,14 @@ int main(int argc, char* argv[])
   int nx;
   int nv;
   int itmax;
-  real tmax;
-  real cfl;
-  real dt, dtmax;
-  real tsave1;
-  real tsave2;
-  real kx;
-  real eps;
-  real vmax;
+  double tmax;
+  double cfl;
+  double dt, dtmax;
+  double tsave1;
+  double tsave2;
+  double kx;
+  double eps;
+  double vmax;
   std::string ic;
   std::string outdir, config_file;
   std::string rk_name="euler";

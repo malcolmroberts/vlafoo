@@ -11,69 +11,68 @@
 #include <sys/time.h> // wall time
 #include <sys/stat.h> //mkdir
 
-typedef double real;
-typedef std::complex<real> Complex;
+typedef std::complex<double> Complex;
 using namespace Array;
-//typedef array1<real>::opt vector;
+//typedef array1<double>::opt vector;
 
 // A C++ class for solving Vlasov equation
 // with a velocity Fourier transform 
 
-class VlaFoo: public timestepper<real>{
+class VlaFoo: public timestepper<double>{
 private:
   int nvk, nxk, nq;
-  real PI, dx, dv, k0x, k0v;
+  double PI, dx, dv, k0x, k0v;
 
   // The Fourier transforms:
   fftwpp::rcfft1d *rc_v, *rc_x;
   fftwpp::crfft1d *cr_v, *cr_x;
 
-  array2<real> f;
-  array2<real> S; // Source term
-  array1<real> E; // Electric field in space
-  array1<real> rho; // Mean velocity (ie velocity density)
+  array2<double> f;
+  array2<double> S; // Source term
+  array1<double> E; // Electric field in space
+  array1<double> rho; // Mean velocity (ie velocity density)
   array1<Complex> rhok; // Fourier-transformed version (for derivative)
   array1<Complex> vtempk; // 1D array for Fourier transformed v per each x.
-  array1<real> vtemp; // 1D array for Fourier transformed v per each x.
+  array1<double> vtemp; // 1D array for Fourier transformed v per each x.
 
   int nx, nv;
 
-  real cfl, dt;
-  real eps, kx; // Landau damping parameters 
-  real L, vmax;
+  double cfl, dt;
+  double eps, kx; // Landau damping parameters 
+  double L, vmax;
   std::string outdir;
   std::string restart_filename;
   bool did_restart;
 
   int framenum;
-  real lastsave1, lastsave2;
+  double lastsave1, lastsave2;
   
-  real index2v(int j) {return j*dv - vmax;}
+  double index2v(int j) {return j*dv - vmax;}
   bool check_for_error();
 
-  real interpolate(real x, int nq, real* x0, real*f);
-  void transport_x(real &dtx);
+  double interpolate(double x, int nq, double* x0, double*f);
+  void transport_x(double &dtx);
 
-  void compute_rho(array2<real> &f);// Compute the mean velocity
-  void compute_E(array2<real> &f); // Compute the electric field
+  void compute_rho(array2<double> &f);// Compute the mean velocity
+  void compute_E(array2<double> &f); // Compute the electric field
   // Compute the source term due to the electric field.
-  void compute_dfdv(array2<real> &f, array2<real> &S);
+  void compute_dfdv(array2<double> &f, array2<double> &S);
   // Compute the source term due to the electric field.
-  void compute_negEdfdv(array2<real> &f, array2<real> &S);
+  void compute_negEdfdv(array2<double> &f, array2<double> &S);
   // Step velocity by Fourier for the term E \grad_v f
-  void transport_v(array2<real> &f, real &dtv);
+  void transport_v(array2<double> &f, double &dtv);
 
   // Output:
 
   // functions to compute output quantities:
-  real compute_kin_energy();
-  real compute_elec_energy();
-  real fmin();
-  real fmax();
-  real ftot();
+  double compute_kin_energy();
+  double compute_elec_energy();
+  double fmin();
+  double fmax();
+  double ftot();
   // scalar output:
-  void curves(real tnow, bool clear_file=false);
-  void curve(real tnow, real value, const char *fname, bool clear_file);
+  void curves(double tnow, bool clear_file=false);
+  void curve(double tnow, double value, const char *fname, bool clear_file);
   // 2D output:
   void plot(int framenum, double tnow);
 
@@ -83,14 +82,14 @@ private:
 public:
     
   // Constructor (no default constructor for you!  Ha!)
-  VlaFoo(int nx, int nv, real cfl, real eps, real kx, real vmax, 
+  VlaFoo(int nx, int nv, double cfl, double eps, double kx, double vmax, 
 	 std::string &outdir, std::string &rk_name, bool dynamic, 
 	 double tolmin, double tolmax, double dtmax, bool redo): 
     nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
     // Set parameters:
     
     // Compute derived parameters:
-    PI=4.0*atan((real)1.0);
+    PI = 4.0 * atan((double)1.0);
     L=2.0*PI/kx;
     k0v=PI/vmax;
     k0x=2*PI/L;
@@ -122,7 +121,7 @@ public:
     std::cout << "tolmin:\t" << tolmin << std::endl;
     std::cout << "tolmax:\t" << tolmax << std::endl;
 
-    // Allocate data arrays (NB: FFTs need real data to be
+    // Allocate data arrays (NB: FFTs need double data to be
     // complex-aligned):
     size_t align=sizeof(Complex);
     f.Allocate(nx,nv,align);
@@ -164,17 +163,17 @@ public:
     rhok.Deallocate();
   }
 
-  void set_dt(real new_dt) {dt = new_dt;}
+  void set_dt(double new_dt) {dt = new_dt;}
 
  // Set initial conditions
   void initial_conditions(std::string &ic, double &tnow, double &dt, 
 			  bool restart);
 
-  void rk_source(real *f, real *S);
+  void rk_source(double *f, double *S);
 
   // Full resolution by Strang splitting
-  void time_step(real &dt);
-  void solve(double tnow, int itmax, real tmax, real tsave1, real tsave2);
+  void time_step(double &dt);
+  void solve(double tnow, int itmax, double tmax, double tsave1, double tsave2);
 
   void write_stats(int it, double tnow, double dt, bool reset=false);
 };
