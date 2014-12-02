@@ -653,6 +653,7 @@ int main(int argc, char* argv[])
   double dt, dtmax;
   double tsave1;
   double tsave2;
+  double Lx;
   double kx;
   double eps;
   double vmax;
@@ -697,6 +698,7 @@ int main(int argc, char* argv[])
       ("cfl", po::value<double>(&cfl)->default_value(0.4), "cfl")
       ("itmax", po::value<int>(&itmax)->default_value(1000000), "itmax")
       ("eps", po::value<double>(&eps)->default_value(5e-3), "eps")
+      ("Lx", po::value<double>(&Lx)->default_value(31.4159265358979), "Lx")
       ("kx", po::value<double>(&kx)->default_value(0.2), "kx")
       ("ic", po::value<std::string>(&ic)->default_value("landau"), "ic")
       ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
@@ -768,7 +770,7 @@ int main(int argc, char* argv[])
     make_asy_input(outdir, vm);
   }
   
-  VlaFoo vla(nx, nv, cfl, eps, kx, vmax, outdir, rk_name, dynamic, tolmin, 
+  VlaFoo vla(nx, nv, cfl, eps, Lx, kx, vmax, outdir, rk_name, dynamic, tolmin, 
 	     tolmax, dtmax, redo);
   
   if(dt != 0.0) 

@@ -38,8 +38,8 @@ private:
   int nx, nv;
 
   double cfl, dt;
-  double eps, kx; // Landau damping parameters 
-  double Lx, vmax;
+  double eps, Lx, kx; // Landau damping parameters 
+  double vmax;
   std::string outdir;
   std::string restart_filename;
   bool did_restart;
@@ -82,15 +82,15 @@ private:
 public:
     
   // Constructor (no default constructor for you!  Ha!)
-  VlaFoo(int nx, int nv, double cfl, double eps, double kx, double vmax, 
-	 std::string &outdir, std::string &rk_name, bool dynamic, 
+  VlaFoo(int nx, int nv, double cfl, double eps, double Lx, double kx, 
+	 double vmax, std::string &outdir, std::string &rk_name, bool dynamic, 
 	 double tolmin, double tolmax, double dtmax, bool redo): 
-    nx(nx),nv(nv),cfl(cfl),eps(eps),kx(kx),vmax(vmax),outdir(outdir){
+    nx(nx), nv(nv), cfl(cfl), eps(eps), Lx(Lx), kx(kx), vmax(vmax), 
+    outdir(outdir){
     // Set parameters:
     
     // Compute derived parameters:
     PI = 4.0 * atan((double)1.0);
-    Lx = 2.0*PI / kx; // FIXME: pass by constructor
     k0v = PI / vmax;
     k0x = 2 * PI / Lx;
     dx = Lx / nx;
