@@ -32,8 +32,10 @@ if(file == "ftotvt") {
 }
   
 bool docrop=false;
-real tmax=infinity;
+real t_max=infinity;
+bool dolegend=true;
 
+//t_max=50;
 
 string runlegs="";
 usersetting();
@@ -72,8 +74,11 @@ while(flag) {
     write("max time="+string(max(t)));
 
     string legend= myleg ? legends[n] : texify(filename);
-    draw(graph(t,Ek,t<=tmax),Pen(n),legend);
+    draw(graph(t,Ek, t <t_max ),Pen(n),legend);
     if(docrop) ylimits(7e-2,1e-1,Crop);
+
+    //xequals(t[23755]);
+    //write(t[23755]);
   }
 }
 
@@ -87,4 +92,5 @@ if(docrop)
 else
 yaxis(ylabel,LeftRight,RightTicks);
 
-attach(legend(),point(plain.E),20plain.E);
+if(dolegend)
+  attach(legend(),point(plain.E),20plain.E);

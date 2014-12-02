@@ -39,6 +39,8 @@ if(sscale == "linlin") scale(Linear,Linear);
 bool docrop=false;
 
 string runlegs="";
+bool doleg=true;
+
 usersetting();
 
 bool myleg=((runlegs== "") ? false: true);
@@ -67,11 +69,12 @@ while(flag) {
     real[] dt=a[2];
 
     string legend= myleg ? legends[n] : texify(filename);
-    draw(graph(a[xcol],a[ycol]),Pen(n),legend);
+    draw(graph(a[xcol],a[ycol],a[ycol]>1e-10),Pen(n),legend);
   }
 }
 
 xaxis(xlabel,BottomTop,LeftTicks);
 yaxis(ylabel,LeftRight,RightTicks);
 
-attach(legend(),point(plain.E),20plain.E);
+if(doleg)
+  attach(legend(),point(plain.E),20plain.E);
