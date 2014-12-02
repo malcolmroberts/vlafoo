@@ -39,7 +39,7 @@ private:
 
   double cfl, dt;
   double eps, kx; // Landau damping parameters 
-  double L, vmax;
+  double Lx, vmax;
   std::string outdir;
   std::string restart_filename;
   bool did_restart;
@@ -90,24 +90,24 @@ public:
     
     // Compute derived parameters:
     PI = 4.0 * atan((double)1.0);
-    L=2.0*PI/kx;
-    k0v=PI/vmax;
-    k0x=2*PI/L;
-    dx=L/nx;
-    dv=2*vmax/nv;
-    dt=dx*cfl/vmax;
-    nvk=nv/2+1;
-    nxk=nx/2+1;
-    nq=4; // number of quadrature points
+    Lx = 2.0*PI / kx; // FIXME: pass by constructor
+    k0v = PI / vmax;
+    k0x = 2 * PI / Lx;
+    dx = Lx / nx;
+    dv = 2 * vmax / nv;
+    dt = dx * cfl / vmax;
+    nvk = nv / 2 + 1;
+    nxk = nx / 2 + 1;
+    nq = 4; // number of quadrature points
     
     // Allocate the time-stepper from the base class
-    rk_allocate(nx*nv,rk_name,dynamic,tolmin,tolmax,dtmax,redo);
+    rk_allocate(nx * nv, rk_name, dynamic, tolmin, tolmax, dtmax, redo);
 
     std::cout << "Creating new 1D Vlasov solver:" << std::endl;
     std::cout << "nx\t" << nx << std::endl;
     std::cout << "nv\t" << nv << std::endl;
     std::cout << "nvk\t" << nvk << std::endl;
-    std::cout << "L\t" << L << std::endl;
+    std::cout << "Lx\t" << Lx << std::endl;
     std::cout << "vmax\t" << vmax << std::endl;
     std::cout << "eps\t" << eps << std::endl;
     std::cout << "kx\t" << kx << std::endl;
@@ -123,23 +123,23 @@ public:
 
     // Allocate data arrays (NB: FFTs need double data to be
     // complex-aligned):
-    size_t align=sizeof(Complex);
-    f.Allocate(nx,nv,align);
-    S.Allocate(nx,nv,align);
-    E.Allocate(nx,align);
-    vtempk.Allocate(nvk,align);
-    vtemp.Allocate(nv,align);
-    rho.Allocate(nx,align);
-    rhok.Allocate(nxk,align);
-    nvk=nv/2+1;
-    rc_v=new fftwpp::rcfft1d(nv,f[0],vtempk());
-    cr_v=new fftwpp::crfft1d(nv,vtempk(),f[0]);
-    rc_x=new fftwpp::rcfft1d(nx,rho,rhok);
-    cr_x=new fftwpp::crfft1d(nx,rhok,rho);
+    size_t align = sizeof(Complex);
+    f.Allocate(nx, nv, align);
+    S.Allocate(nx, nv, align);
+    E.Allocate(nx, align);
+    vtempk.Allocate(nvk, align);
+    vtemp.Allocate(nv, align);
+    rho.Allocate(nx, align);
+    rhok.Allocate(nxk, align);
 
-    restart_filename="restart";
+    rc_v = new fftwpp::rcfft1d(nv, f[0], vtempk());
+    cr_v = new fftwpp::crfft1d(nv, vtempk(), f[0]);
+    rc_x = new fftwpp::rcfft1d(nx, rho, rhok);
+    cr_x = new fftwpp::crfft1d(nx, rhok, rho);
 
-    int mkdirnotok=mkdir(outdir.c_str(),S_IRWXU);
+    restart_filename = "restart";
+
+    int mkdirnotok = mkdir(outdir.c_str(),S_IRWXU);
     if(mkdirnotok) {
       // TODO: this claims to fail if directory is already present.
       // std::cout << "ERROR: mkdir failed!" << std::endl;
