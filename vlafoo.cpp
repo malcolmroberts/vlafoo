@@ -311,7 +311,7 @@ void VlaFoo::time_step(double &dt)
 void VlaFoo::solve(double tnow, int itmax, double tmax, 
 		   double tsave1, double tsave2)
 {
-  int it=0;
+  int it = 0;
 
   if(!did_restart) {
     // erase contents of output files and add initial value
@@ -425,7 +425,8 @@ void VlaFoo::solve(double tnow, int itmax, double tmax,
   }
   if(!error) {
     curves(tnow);
-    write_restart(tnow, dt);
+    write_stats(it, tnow, dt0);
+    write_restart(tnow, dt0);
     std::cout << "final time t=" << tnow << "\n" << std::endl;
   } else {
     std::cout << "Finished on error" << std::endl;
