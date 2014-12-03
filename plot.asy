@@ -32,10 +32,8 @@ int nx=10;
 int nv=10;
 
 
-real L=31.4159;
-L=getreal("L");
 pair a=(0,-vmax);
-pair b=(L,vmax);
+pair b=(Lx,vmax);
 
 write("min=",min(f));
 write("max=",max(f));
@@ -76,9 +74,9 @@ if(vcut > 0 && vcut < vmax) {
 }
   
 if(nneg > 0) {
-  write(nneg/(f.length*f[0].length));
+  //write(nneg/(f.length*f[0].length));
   negmean /= nneg;
-  write(negmean);
+  write("mean of negative points: "+string(negmean));
 }
 
 xaxis("$x$",BottomTop,LeftTicks,above=true);

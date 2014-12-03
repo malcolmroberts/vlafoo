@@ -165,7 +165,8 @@ public:
   void set_dt(double new_dt) {dt = new_dt;}
 
  // Set initial conditions
-  void initial_conditions(std::string &ic, double &tnow, double &dt, 
+  void initial_conditions(std::string &ic, double v0, 
+			  double &tnow, double &dt, 
 			  bool restart);
 
   void rk_source(double *f, double *S);

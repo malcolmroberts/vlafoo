@@ -7,7 +7,8 @@ namespace po = boost::program_options;
 
 
 // Compute initial condition
-void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
+void VlaFoo::initial_conditions(std::string &ic, double v0, 
+				double &tnow, double &dt,
 				bool restart) {
   double overs2pi = 1.0 / sqrt(2.0 * PI);
 
@@ -20,19 +21,19 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
   // for(int ix=0;ix<nx;ix++) f[ix][1]=1.0;
 
   if(restart) {
-    read_restart(tnow,dt);
-    did_restart=true;
+    read_restart(tnow, dt);
+    did_restart = true;
     return;
   }
 
   if(ic == "test0") {
-    f[0][nv/4]=1.0;
-    f[0][3*nv/4]=1.0;
+    f[0][nv / 4] = 1.0;
+    f[0][3 * nv / 4] = 1.0;
     return;
   }
   if(ic == "test1") {
     for(int j=0; j < nv; ++j)
-      f[0][j]=1.0;
+      f[0][j] = 1.0;
     return;
   }
 
@@ -58,7 +59,7 @@ void VlaFoo::initial_conditions(std::string & ic, double &tnow, double &dt,
     //double-stream instability
     // f0=(exp(-(v-v0)*(v-v0)/2)+exp(-(v+v0)*(v+v0)/2))*
     // (1+eps*cos(kx*x))/sqrt(2*pi)/2
-    double v0 = 3.0;
+    //double v0 = 3.0;
     double overs2pi = 0.5 / sqrt(2.0 * PI);
     for(int i = 0; i < nx; i++){
       double x = i * dx;
@@ -660,8 +661,9 @@ int main(int argc, char* argv[])
   double eps;
   double vmax;
   std::string ic;
+  double v0;
   std::string outdir, config_file;
-  std::string rk_name="euler";
+  std::string rk_name;
   bool restart;
   double tolmin, tolmax;
   bool redo;
@@ -701,7 +703,9 @@ int main(int argc, char* argv[])
       ("eps", po::value<double>(&eps)->default_value(5e-3), "eps")
       ("Lx", po::value<double>(&Lx)->default_value(31.4159265358979), "Lx")
       ("kx", po::value<double>(&kx)->default_value(0.2), "kx")
-      ("ic", po::value<std::string>(&ic)->default_value("landau"), "ic")
+      ("ic", po::value<std::string>(&ic)->default_value("landau"), 
+       "initial conditions: landau, doublestream, test0, test1")
+      ("v0", po::value<double>(&v0)->default_value(3.0), "v0")
       ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
        "rk_name: euler, rk2, or rk2d (dynamic)")
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003), "tolmin")
@@ -778,7 +782,7 @@ int main(int argc, char* argv[])
     
   std::cout << "Setting up initial conditions..." << std::endl;
   double tnow = 0.0;
-  vla.initial_conditions(ic, tnow,dt, restart);
+  vla.initial_conditions(ic, v0, tnow,dt, restart);
 
   std::cout << "Solving..." << std::endl;
   vla.solve(tnow, itmax, tmax, tsave1, tsave2);
