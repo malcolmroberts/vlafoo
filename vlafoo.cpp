@@ -458,7 +458,7 @@ void VlaFoo::curves(double tnow, bool clear_file)
   curve(tnow, compute_elec_energy(), "eEvt", clear_file);
   curve(tnow, fmin(), "fminvt", clear_file);
   curve(tnow, fmax(), "fmaxvt", clear_file);
-  curve(tnow, fmax(), "ftotvt", clear_file);
+  curve(tnow, ftot(), "ftotvt", clear_file);
 }
 
 void VlaFoo::plot(int framenum, double tnow)
