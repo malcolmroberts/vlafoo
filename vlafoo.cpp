@@ -308,7 +308,8 @@ void VlaFoo::time_step(double &dt)
   transport_x(dt);
 }
 
-void VlaFoo::solve(double tnow, int itmax, double tmax, double tsave1, double tsave2)
+void VlaFoo::solve(double tnow, int itmax, double tmax, 
+		   double tsave1, double tsave2)
 {
   int it=0;
 
@@ -332,7 +333,7 @@ void VlaFoo::solve(double tnow, int itmax, double tmax, double tsave1, double ts
   bool error = false;
   
   double wall0 = get_wall_time();
-  double wallinterval = 10.0;// 10  // update number of iterations every second
+  double wallinterval = 10;// 10  // update number of iterations every second
   unsigned int checkinterval = 10; //10
   int wallouts = 0;
   bool go = true;
@@ -531,15 +532,15 @@ void VlaFoo::write_stats(int it, double tnow, double dt, bool reset)
 	      << "tnow" << "\t"
 	      << "dt" 
 	      << std::endl;
-    plot_file.close();
   } else {
     plot_file.open(outname.c_str(),std::fstream::app);
-    plot_file << it << "\t" 
-	      << tnow << "\t"
-	      << dt 
-	      << std::endl;
-    plot_file.close();
   }
+  plot_file << it << "\t" 
+	    << tnow << "\t"
+	    << dt 
+	    << std::endl;
+  plot_file.close();
+  
 }
 
 double VlaFoo::compute_kin_energy()
@@ -660,7 +661,6 @@ int main(int argc, char* argv[])
   std::string ic;
   std::string outdir, config_file;
   std::string rk_name="euler";
-  bool dynamic;
   bool restart;
   double tolmin, tolmax;
   bool redo;
@@ -702,8 +702,7 @@ int main(int argc, char* argv[])
       ("kx", po::value<double>(&kx)->default_value(0.2), "kx")
       ("ic", po::value<std::string>(&ic)->default_value("landau"), "ic")
       ("rk_name", po::value<std::string>(&rk_name)->default_value("rk2"),
-       "rk_name: euler or rk2")
-      ("dynamic", po::value<bool>(&dynamic)->default_value(true), "dynamic")
+       "rk_name: euler, rk2, or rk2d (dynamic)")
       ("tolmin", po::value<double>(&tolmin)->default_value(0.0003), "tolmin")
       ("tolmax", po::value<double>(&tolmax)->default_value(0.0005), "tolmax")
       ("restart", po::value<bool>(&restart)->default_value(false), "restart")
@@ -770,7 +769,7 @@ int main(int argc, char* argv[])
     make_asy_input(outdir, vm);
   }
   
-  VlaFoo vla(nx, nv, cfl, eps, Lx, kx, vmax, outdir, rk_name, dynamic, tolmin, 
+  VlaFoo vla(nx, nv, cfl, eps, Lx, kx, vmax, outdir, rk_name, tolmin, 
 	     tolmax, dtmax, redo);
   
   if(dt != 0.0) 

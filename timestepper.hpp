@@ -11,7 +11,6 @@ private:
   int rk_stages;
   bool f_save_allocated;
   bool fold_allocated;
-  bool dynamic;
   enum RKTYPE{EULER,RK2,RK2D};
   RKTYPE rk;
   double tolmin, tolmax;
@@ -39,7 +38,6 @@ public:
   }
 
   void rk_allocate(int n, std::string &rk_name, 
-		   bool dynamic0, 
 		   double tolmin0, double tolmax0,
 		   double dtmax0,
 		   bool redo0)
@@ -48,7 +46,6 @@ public:
     dtmax=dtmax0;
     rk_n=n;
     rk_stages=0;
-    dynamic=dynamic0;
     tolmin=tolmin0;
     tolmax=tolmax0;
 
@@ -59,12 +56,10 @@ public:
     if(rk_name == "euler") {
       rk_stages=1;
       rk=EULER;
-      dynamic=false;
     }
     if(rk_name == "rk2") {
       rk_stages=2;
       rk=RK2;
-      dynamic=false;
     }
     if(rk_name == "rk2d") {
       rk_stages=2;
