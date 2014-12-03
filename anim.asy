@@ -22,8 +22,6 @@ string basename=getstring("basename");
 //string basename=getstring("basename");
 int n=getint("n");
 //real vmax=6.0;
-real L=31.4159;
-L=getreal("L");
 
 real vcut=0;
 
@@ -33,7 +31,7 @@ if(vcut == 0)
   vcut=getreal("vcut");
 
 pair a=(0,-vmax);
-pair b=(L,vmax);
+pair b=(Lx,vmax);
 
 pen[] Palette=BWRainbow();
 
