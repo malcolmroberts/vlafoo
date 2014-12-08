@@ -1,17 +1,10 @@
 When restarting a file, re-read the *vt files and remove doubled
 entries.
 
-asymptote should read paramters in from config file.
-
-add "=" to strings when updating the config file to avoid
-double-counting.
-
-Make dynamic time-steppers able to recover from nans/infs (by
-repeating a time-step).
-
-re-doing bad time-steps seems to change results.
-
 Add RK4/5 method.
+
+Add higher-order Strang splitting.
 
 Add DG method.
 
+check convergence of output in terms of FFT convergence
