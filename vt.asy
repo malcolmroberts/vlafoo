@@ -30,7 +30,8 @@ if(file == "ftotvt") {
   scale(Linear,Linear);
   ylabel="total number of particles";
 }
-  
+
+
 bool docrop=false;
 real t_max=infinity;
 bool dolegend=true;
@@ -43,7 +44,15 @@ usersetting();
 bool myleg=((runlegs== "") ? false: true);
 string[] legends=set_legends(runlegs);
 
-
+real landau_linearE(real t) {
+  // for kx = 0.5;
+  real wr = 1.4156; // 1.78;
+  real wi = -0.1533;
+  real r = 0.3677;
+  real E = 4.0 * eps *r * sqrt(pi / kx) * exp(wi * t) * cos(wr * t);
+  return abs(E);
+}
+  
 
 string filename;
 int n=-1;
@@ -74,11 +83,28 @@ while(flag) {
     write("max time="+string(max(t)));
 
     string legend= myleg ? legends[n] : texify(filename);
-    draw(graph(t,Ek, t <t_max ),Pen(n),legend);
+    draw(graph(t, Ek, t < t_max ), Pen(n), legend);
+
+    if(file == "eEvt") {
+      if(ic == "landau" && kx == 0.5) {
+	real[] Elin = new real[Ek.length];
+	for(int i = 0; i < Ek.length; ++i) {
+	  Elin[i] = landau_linearE(t[i]);
+	}
+	//draw(graph(t, Elin , t < t_max ), Pen(n) + dashed);
+	draw(graph(t, Elin , t < t_max ), black + dotted);
+      }
+      if(ic == "doublestream" && v0 == 3.0 && kx == 0.2) {
+	real[] Elin = new real[Ek.length];
+	for(int i = 0; i < Ek.length; ++i) {
+	  Elin[i] = landau_linearE(t[i]);
+	}
+	draw(graph(t, Elin , t < t_max ), Pen(n) + dashed);
+      }
+    }
+    
     if(docrop) ylimits(7e-2,1e-1,Crop);
 
-    //xequals(t[23755]);
-    //write(t[23755]);
   }
 }
 

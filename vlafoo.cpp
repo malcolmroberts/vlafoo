@@ -193,8 +193,8 @@ void VlaFoo::compute_E(array2<double> &f)
   
   compute_rho(f);
 
-  for(int i = 0; i < nx; i++) 
-    rho[i] -= 1.0;
+  // for(int i = 0; i < nx; i++) 
+  //   rho[i] -= 1.0;
 
 #if 1
   // using Fourier integration
@@ -220,16 +220,16 @@ void VlaFoo::compute_E(array2<double> &f)
 
   // Set mean to zero:
   rhok[0]=0.0;
-  double overnx=1.0/nx;
-  for(int i=1; i < nxk-1; i++) {
-    double k=k0x*i;
-    Complex rhoki=rhok[i];
-    double re=rhoki.real();
-    double im=rhoki.imag();
-    double ct=1.0/tan(PI*k*overnx);
-    rhok[i]=0.5*k*dx*ct*Complex(im,-re);
+  double overnx = 1.0 / nx;
+  for(int i = 1; i < nxk - 1; i++) {
+    double k = k0x * i;
+    Complex rhoki = rhok[i];
+    double re = rhoki.real();
+    double im = rhoki.imag();
+    double ct = 1.0 / tan(PI * k * overnx);
+    rhok[i] = 0.5 * k * dx * ct * Complex(im, -re);
   }
-  rhok[nxk-1]=0.0; // kill the nyquist
+  rhok[nxk - 1] = 0.0; // kill the nyquist
 
 #endif
 }
@@ -565,7 +565,7 @@ double VlaFoo::compute_elec_energy()
     double Ei = E[i];
     energy += dx * Ei * Ei;
   }
-  return sqrt(energy);
+  return 0.5 * sqrt(energy);
 }
 
 

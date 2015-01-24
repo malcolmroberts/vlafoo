@@ -47,10 +47,10 @@ private:
   int framenum;
   double lastsave1, lastsave2;
   
-  double index2v(int j) {return j*dv - vmax;}
+  double index2v(int j) {return j * dv - vmax;}
   bool check_for_error();
 
-  double interpolate(double x, int nq, double* x0, double*f);
+  double interpolate(double x, int nq, double *x0, double *f);
   void transport_x(double &dtx);
 
   void compute_rho(array2<double> &f);// Compute the mean velocity
@@ -77,10 +77,9 @@ private:
   void plot(int framenum, double tnow);
 
   void write_restart(const double tnow, const double dt);
-  void read_restart(double & tnow, double & dt);
+  void read_restart(double &tnow, double &dt);
 
 public:
-    
   // Constructor (no default constructor for you!  Ha!)
   VlaFoo(int nx, int nv, double cfl, double eps, double Lx, double kx, 
 	 double vmax, std::string &outdir, std::string &rk_name, 
@@ -90,7 +89,7 @@ public:
     // Set parameters:
     
     // Compute derived parameters:
-    PI = 4.0 * atan((double)1.0);
+    PI = 4.0 * atan(1.0);
     k0v = PI / vmax;
     k0x = 2 * PI / Lx;
     dx = Lx / nx;
@@ -138,7 +137,7 @@ public:
 
     restart_filename = "restart";
 
-    int mkdirnotok = mkdir(outdir.c_str(),S_IRWXU);
+    int mkdirnotok = mkdir(outdir.c_str(), S_IRWXU);
     if(mkdirnotok) {
       // TODO: this claims to fail if directory is already present.
       // std::cout << "ERROR: mkdir failed!" << std::endl;
