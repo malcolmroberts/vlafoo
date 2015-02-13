@@ -92,7 +92,7 @@ while(flag) {
 	  Elin[i] = landau_linearE(t[i]);
 	}
 	//draw(graph(t, Elin , t < t_max ), Pen(n) + dashed);
-	draw(graph(t, Elin , t < t_max ), black + dotted);
+	draw(graph(t, Elin , t < t_max ), black);
       }
       if(ic == "doublestream" && v0 == 3.0 && kx == 0.2) {
 	real[] Elin = new real[Ek.length];

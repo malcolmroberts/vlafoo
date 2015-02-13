@@ -70,6 +70,8 @@ private:
   double fmin();
   double fmax();
   double ftot();
+  double fL1();
+  double fL2();
   // scalar output:
   void curves(double tnow, bool clear_file=false);
   void curve(double tnow, double value, const char *fname, bool clear_file);

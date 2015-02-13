@@ -161,7 +161,6 @@ void VlaFoo::transport_x(double &dtx)
   delete[] x0;
   delete[] f0;
   
-
   // TODO: optimise into a swap?
   for(int i = 0; i < nx; ++i) {
     array1<double>::opt fi = f[i];
@@ -459,6 +458,8 @@ void VlaFoo::curves(double tnow, bool clear_file)
   curve(tnow, fmin(), "fminvt", clear_file);
   curve(tnow, fmax(), "fmaxvt", clear_file);
   curve(tnow, ftot(), "ftotvt", clear_file);
+  curve(tnow, fL1(), "fL1", clear_file);
+  curve(tnow, fL2(), "fL2", clear_file);
 }
 
 void VlaFoo::plot(int framenum, double tnow)
@@ -608,6 +609,31 @@ double VlaFoo::ftot()
   }
   return dx * dv * val;
 }
+
+double VlaFoo::fL1()
+{
+  double val = 0.0;
+  
+  for(int i = 0; i < nx; ++i) {
+    array1<double>::opt fi = f[i];
+    for(int j = 0; j < nv; ++j)
+      val += abs(fi[j]);
+  }
+  return dx * dv * val;
+}
+
+double VlaFoo::fL2()
+{
+  double val = 0.0;
+  
+  for(int i = 0; i < nx; ++i) {
+    array1<double>::opt fi = f[i];
+    for(int j = 0; j < nv; ++j)
+      val += fi[j] * fi[j];
+  }
+  return dx * dv * val;
+}
+
 
 bool VlaFoo::check_for_error()
 {
